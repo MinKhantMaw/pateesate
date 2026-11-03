@@ -29,7 +29,7 @@ export const defaultCategories: Category[] = [
     { id: 'metta-3', name: 'ကိုယ်ကျန်းမာပါစေ' }, { id: 'metta-4', name: 'ဆင်းရဲကင်းပါစေ' },
     { id: 'metta-5', name: 'သတ္တဝါအားလုံး ချမ်းသာကြပါစေ' },
   ] },
-  { id: 'custom', name: 'ကိုယ်ပိုင်', mode: 'sequence', items: [] },
+  // { id: 'custom', name: 'ကိုယ်ပိုင်', mode: 'sequence', items: [] },
   { id: 'combo', name: 'သရဏဂုံ + ဂုဏ်တော် + ၂၄ ပစ္စည်း အကျဉ်း', mode: 'sequence', items: [
     ...['ဗုဒ္ဓံ သရဏံ ဂစ္ဆာမိ', 'ဓမ္မံ သရဏံ ဂစ္ဆာမိ', 'သံဃံ သရဏံ ဂစ္ဆာမိ'].map((name, index) => ({ id: `combo-saranagon-${index + 1}`, name })),
     ...['အရဟံ', 'သမ္မာသမ္ဗုဒ္ဓေါ', 'ဝိဇ္ဇာစရဏသမ္ပန္နော', 'သုဂတော', 'လောကဝိဒူ', 'အနုတ္တရော ပုရိသဒမ္မသာရထိ', 'သတ္ထာ ဒေဝမနုဿာနံ', 'ဗုဒ္ဓေါ', 'ဘဂဝါ'].map((name, index) => ({ id: `combo-guna9-${index + 1}`, name })),
