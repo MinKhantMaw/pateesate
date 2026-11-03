@@ -21,6 +21,12 @@ export function availableCategories(categories: Category[]): Category[] {
   return existing ? categories.map(category => category.id === catalog.id ? { ...category, items: [...category.items, ...missing] } : category) : [...categories, { ...catalog, items: missing }]
 }
 
+export function addArahanSiddhi(categories: Category[]): Category[] {
+  const category = defaultCategories.find(entry => entry.id === 'arahan-siddhi')!
+  if (categories.some(entry => entry.id === category.id || entry.items.some(item => item.id === 'arahan-siddhi-1'))) return categories
+  return [...categories, category]
+}
+
 export function upgradeLegacyCombos(combos: Combo[]): Combo[] {
   const defaultCombo = defaultCombos[0]
   const oldSteps = defaultCombo.steps.slice(0, 12)
@@ -47,7 +53,7 @@ export function validData(value: unknown): value is AppData {
     if (!object(category) || typeof category.id !== 'string' || !category.id || categoryIds.has(category.id) || typeof category.name !== 'string' || !category.name.trim() || !Array.isArray(category.items) || (category.mode !== undefined && category.mode !== 'single' && category.mode !== 'sequence')) return false
     categoryIds.add(category.id)
     for (const item of category.items) {
-      if (!object(item) || typeof item.id !== 'string' || !item.id || itemIds.has(item.id) || typeof item.name !== 'string' || !item.name.trim() || (item.description !== undefined && typeof item.description !== 'string') || (item.group !== undefined && typeof item.group !== 'string')) return false
+      if (!object(item) || typeof item.id !== 'string' || !item.id || itemIds.has(item.id) || typeof item.name !== 'string' || !item.name.trim() || (item.description !== undefined && typeof item.description !== 'string') || (item.group !== undefined && typeof item.group !== 'string') || (item.fullText !== undefined && typeof item.fullText !== 'string')) return false
       itemIds.add(item.id)
     }
   }
@@ -62,7 +68,7 @@ export function validData(value: unknown): value is AppData {
   if (!Object.values(value.counts).every(count => object(count) && integer(count.total) && integer(count.rounds))) return false
   if (!Object.entries(value.history).every(([day, entries]) => /^\d{4}-\d{2}-\d{2}$/.test(day) && object(entries) && Object.values(entries).every(integer))) return false
   const settings = value.settings
-  if (!['light', 'dark'].includes(settings.theme as string) || typeof settings.vibration !== 'boolean' || typeof settings.sound !== 'boolean' || !target(settings.defaultTarget) || (settings.beadsPerRound !== undefined && !target(settings.beadsPerRound)) || (settings.goalRounds !== undefined && !target(settings.goalRounds)) || (settings.reminders !== undefined && typeof settings.reminders !== 'boolean') || (settings.lastReminderSlot !== undefined && typeof settings.lastReminderSlot !== 'string')) return false
+  if (!['light', 'dark'].includes(settings.theme as string) || typeof settings.vibration !== 'boolean' || typeof settings.sound !== 'boolean' || !target(settings.defaultTarget) || (settings.beadsPerRound !== undefined && !target(settings.beadsPerRound)) || (settings.goalRounds !== undefined && !target(settings.goalRounds)) || (settings.reminders !== undefined && typeof settings.reminders !== 'boolean') || (settings.chantTextSize !== undefined && (!integer(settings.chantTextSize) || (settings.chantTextSize as number) < 14 || (settings.chantTextSize as number) > 32)) || (settings.beadStyle !== undefined && !['gold', 'jade', 'wood'].includes(settings.beadStyle as string)) || (settings.glowEffect !== undefined && typeof settings.glowEffect !== 'boolean') || (settings.lastReminderSlot !== undefined && typeof settings.lastReminderSlot !== 'string')) return false
   if (value.groupRounds !== undefined && (!object(value.groupRounds) || !Object.values(value.groupRounds).every(integer))) return false
   if (value.goalHistory !== undefined && (!object(value.goalHistory) || !Object.entries(value.goalHistory).every(([day, entries]) => /^\d{4}-\d{2}-\d{2}$/.test(day) && Array.isArray(entries) && entries.every(entry => object(entry) && typeof entry.id === 'string' && target(entry.goalRounds) && target(entry.beadsPerRound))))) return false
   const session = value.session
@@ -71,7 +77,7 @@ export function validData(value: unknown): value is AppData {
 }
 
 export function downloadData(data: AppData) {
-  const blob = new Blob([JSON.stringify({ version: 5, ...data }, null, 2)], { type: 'application/json' })
+  const blob = new Blob([JSON.stringify({ version: 6, ...data }, null, 2)], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
   const anchor = document.createElement('a')
   anchor.href = url

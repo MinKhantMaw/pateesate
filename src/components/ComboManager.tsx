@@ -141,7 +141,6 @@ export function ComboManager() {
                   className="icon-button"
                   title="ပြင်မည်"
                   aria-label={`${combo.name} ပြင်မည်`}
-                  disabled
                   onClick={() => edit(combo)}
                 >
                   <Pencil size={17} />

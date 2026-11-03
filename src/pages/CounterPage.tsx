@@ -11,7 +11,11 @@ import { ConfirmDialog } from "../components/ConfirmDialog";
 import { CounterButton } from "../components/CounterButton";
 import { GoalDialog } from "../components/GoalDialog";
 import { RoundSettings } from "../components/RoundSettings";
-import { counterFeedback, milestoneFeedback, useCounter } from "../hooks/useCounter";
+import {
+  counterFeedback,
+  milestoneFeedback,
+  useCounter,
+} from "../hooks/useCounter";
 import { useWakeLock } from "../hooks/useWakeLock";
 import { useApp } from "../store/AppContextValue";
 import { availableCategories, sequenceKey } from "../utils/data";
@@ -164,6 +168,32 @@ function ModeSwitch({
   );
 }
 
+function ChantText({ text }: { text?: string }) {
+  const { settings, setSettings } = useApp();
+  if (!text?.trim()) return null;
+  const size = settings.chantTextSize;
+  return (
+    <section className="chant-text-card" aria-label="စာသားအပြည့်အစုံ">
+      <div className="chant-text-controls">
+        <button type="button" title="စာလုံးသေးမည်" aria-label="စာလုံးသေးမည်" disabled={size <= 14} onClick={() => setSettings(previous => ({ ...previous, chantTextSize: Math.max(14, previous.chantTextSize - 2) }))}>A-</button>
+        <button type="button" title="စာလုံးကြီးမည်" aria-label="စာလုံးကြီးမည်" disabled={size >= 32} onClick={() => setSettings(previous => ({ ...previous, chantTextSize: Math.min(32, previous.chantTextSize + 2) }))}>A+</button>
+      </div>
+      <div className="chant-text-content" tabIndex={0} style={{ fontSize: size }}>{text}</div>
+    </section>
+  );
+}
+
+function RoundIndicator({ rounds, goal }: { rounds: number; goal: number }) {
+  return (
+    <div className="round-indicator">
+      <div className="round-dots" aria-hidden="true">
+        {Array.from({ length: Math.min(goal, 9) }, (_, index) => <span key={index} className={index < rounds ? "is-lit" : ""} />)}
+      </div>
+      <p className="round-summary">ပြီးသောပတ်: {number(rounds)} / {number(goal)}</p>
+    </div>
+  );
+}
+
 function CounterScreen({
   category,
   item,
@@ -187,14 +217,23 @@ function CounterScreen({
   const goalRounds = counter.session.goalRounds ?? store.settings.goalRounds;
   const roundsDone = counter.session.roundsDone ?? 0;
   const [completed, setCompleted] = useState(false);
+  const [goalDialogReady, setGoalDialogReady] = useState(true);
   const [confirmReset, setConfirmReset] = useState(false);
-  const [pendingTarget, setPendingTarget] = useState<{ beads: number; goal: number } | null>(null);
+  const [pendingTarget, setPendingTarget] = useState<{
+    beads: number;
+    goal: number;
+  } | null>(null);
   useEffect(() => {
     if (completed) {
       const timer = window.setTimeout(() => setCompleted(false), 2000);
       return () => window.clearTimeout(timer);
     }
   }, [completed, counter.count.rounds]);
+  useEffect(() => {
+    if (goalDialogReady) return;
+    const timer = window.setTimeout(() => setGoalDialogReady(true), 1050);
+    return () => window.clearTimeout(timer);
+  }, [goalDialogReady]);
   const itemIndex = category.items.findIndex((entry) => entry.id === item.id);
   const previous = category.items[itemIndex - 1];
   const next = category.items[itemIndex + 1];
@@ -223,25 +262,33 @@ function CounterScreen({
         <h1>{item.name}</h1>
         {item.description && <p>{item.description}</p>}
       </div>
+      <ChantText text={item.fullText} />
       <div className="counter-stage">
-        <div className="bead-orbit">
           <CounterButton
             count={counter.session.count}
             target={counter.session.target}
+            rounds={roundsDone}
+            style={store.settings.beadStyle}
+            glow={store.settings.glowEffect}
+            disabled={counter.session.goalReached}
             onClick={() => {
               if (counter.tap()) {
                 const goal = (roundsDone + 1) % goalRounds === 0;
-                milestoneFeedback(store.settings.vibration, store.settings.sound, goal);
+                if (goal && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) setGoalDialogReady(false);
+                milestoneFeedback(
+                  store.settings.vibration,
+                  store.settings.sound,
+                  goal,
+                );
                 setCompleted(true);
               }
             }}
           />
-        </div>
       </div>
       <div className="round-message" aria-live="polite">
         {completed ? "၁ ပတ်ပြည့်ပါပြီ" : "\u00a0"}
       </div>
-      <p className="round-summary">ပြီးသောပတ်: {number(roundsDone)} / {number(goalRounds)}</p>
+      <RoundIndicator rounds={roundsDone} goal={goalRounds} />
       <div className="counter-summary">
         <div>
           <span>စုစုပေါင်း</span>
@@ -305,7 +352,12 @@ function CounterScreen({
         )}
       </nav>
       <div className="counter-settings">
-        <RoundSettings key={`${counter.session.target}:${goalRounds}`} beadsPerRound={counter.session.target} goalRounds={goalRounds} onChange={changeTarget} />
+        <RoundSettings
+          key={`${counter.session.target}:${goalRounds}`}
+          beadsPerRound={counter.session.target}
+          goalRounds={goalRounds}
+          onChange={changeTarget}
+        />
         <label className="wake-row">
           <span>
             မျက်နှာပြင်ဖွင့်ထားမည်
@@ -354,7 +406,18 @@ function CounterScreen({
           </p>
         </ConfirmDialog>
       )}
-      {counter.session.goalReached && <GoalDialog rounds={roundsDone} beadsPerRound={counter.session.target} onContinue={counter.dismissGoal} onReset={() => counter.reset()} onDone={() => { counter.dismissGoal(); navigate(comboName ? "/" : `/category/${category.id}`); }} />}
+      {counter.session.goalReached && goalDialogReady && (
+        <GoalDialog
+          rounds={roundsDone}
+          beadsPerRound={counter.session.target}
+          onContinue={counter.dismissGoal}
+          onReset={() => counter.reset()}
+          onDone={() => {
+            counter.dismissGoal();
+            navigate(comboName ? "/" : `/category/${category.id}`);
+          }}
+        />
+      )}
     </main>
   );
 }
@@ -430,14 +493,23 @@ function SequenceScreen({
             : ""
       : "";
   const [completed, setCompleted] = useState(false);
+  const [goalDialogReady, setGoalDialogReady] = useState(true);
   const [confirmReset, setConfirmReset] = useState(false);
-  const [pendingTarget, setPendingTarget] = useState<{ beads: number; goal: number } | null>(null);
+  const [pendingTarget, setPendingTarget] = useState<{
+    beads: number;
+    goal: number;
+  } | null>(null);
   useEffect(() => {
     if (completed) {
       const timer = window.setTimeout(() => setCompleted(false), 2000);
       return () => window.clearTimeout(timer);
     }
   }, [completed, rounds]);
+  useEffect(() => {
+    if (goalDialogReady) return;
+    const timer = window.setTimeout(() => setGoalDialogReady(true), 1050);
+    return () => window.clearTimeout(timer);
+  }, [goalDialogReady]);
   function move(index: number) {
     store.saveSequence({ ...sequence, currentIndex: index, repeatIndex: 0 });
     setCompleted(false);
@@ -450,14 +522,18 @@ function SequenceScreen({
       sessionTaps: 0,
       passes: 0,
       progress: 0,
-      target: goal, beadsPerRound: beads, goalRounds: goal, goalReached: false,
+      target: goal,
+      beadsPerRound: beads,
+      goalRounds: goal,
+      goalReached: false,
       undo: [],
     });
     setCompleted(false);
   }
   function changeTarget(beads: number, goal: number) {
     if (beads === beadsPerRound && goal === goalRounds) return;
-    if (sequence.sessionTaps || sequence.undo.length) setPendingTarget({ beads, goal });
+    if (sequence.sessionTaps || sequence.undo.length)
+      setPendingTarget({ beads, goal });
     else reset(beads, goal);
   }
   function switchMode(mode: CounterMode) {
@@ -520,26 +596,34 @@ function SequenceScreen({
         </div>
       </div>
       {section && <p className="sequence-section">{section}</p>}
+      <ChantText text={current.fullText} />
       <div className="counter-stage">
-        <div className="bead-orbit">
           <CounterButton
             count={sequence.sessionTaps % beadsPerRound}
             target={beadsPerRound}
+            rounds={sequence.passes}
+            style={store.settings.beadStyle}
+            glow={store.settings.glowEffect}
+            disabled={sequence.goalReached}
             onClick={() => {
               counterFeedback(store.settings.vibration, store.settings.sound);
               if (store.incrementSequence(sequence, steps)) {
                 const goal = (sequence.passes + 1) % goalRounds === 0;
-                milestoneFeedback(store.settings.vibration, store.settings.sound, goal);
+                if (goal && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) setGoalDialogReady(false);
+                milestoneFeedback(
+                  store.settings.vibration,
+                  store.settings.sound,
+                  goal,
+                );
                 setCompleted(true);
               }
             }}
           />
-        </div>
       </div>
       <div className="round-message" aria-live="polite">
         {completed ? "၁ ပတ်ပြည့်ပါပြီ" : "\u00a0"}
       </div>
-      <p className="round-summary">ပြီးသောပတ်: {number(sequence.passes)} / {number(goalRounds)}</p>
+      <RoundIndicator rounds={sequence.passes} goal={goalRounds} />
       <div className="counter-summary sequence-summary">
         <div>
           <span>ယခုစာသား</span>
@@ -614,7 +698,12 @@ function SequenceScreen({
         </div>
       </details>
       <div className="counter-settings">
-        <RoundSettings key={`${beadsPerRound}:${goalRounds}`} beadsPerRound={beadsPerRound} goalRounds={goalRounds} onChange={changeTarget} />
+        <RoundSettings
+          key={`${beadsPerRound}:${goalRounds}`}
+          beadsPerRound={beadsPerRound}
+          goalRounds={goalRounds}
+          onChange={changeTarget}
+        />
         <label className="wake-row">
           <span>
             မျက်နှာပြင်ဖွင့်ထားမည်
@@ -662,7 +751,20 @@ function SequenceScreen({
           </p>
         </ConfirmDialog>
       )}
-      {sequence.goalReached && <GoalDialog rounds={sequence.passes} beadsPerRound={beadsPerRound} onContinue={() => store.saveSequence({ ...sequence, goalReached: false })} onReset={() => reset()} onDone={() => { store.saveSequence({ ...sequence, goalReached: false }); navigate(combo ? "/" : `/category/${category.id}`); }} />}
+      {sequence.goalReached && goalDialogReady && (
+        <GoalDialog
+          rounds={sequence.passes}
+          beadsPerRound={beadsPerRound}
+          onContinue={() =>
+            store.saveSequence({ ...sequence, goalReached: false })
+          }
+          onReset={() => reset()}
+          onDone={() => {
+            store.saveSequence({ ...sequence, goalReached: false });
+            navigate(combo ? "/" : `/category/${category.id}`);
+          }}
+        />
+      )}
     </main>
   );
 }

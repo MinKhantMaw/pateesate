@@ -28,7 +28,8 @@ export function SettingsPage() {
           parsed.version !== 2 &&
           parsed.version !== 3 &&
           parsed.version !== 4 &&
-          parsed.version !== 5)
+          parsed.version !== 5 &&
+          parsed.version !== 6)
       )
         throw new Error("Invalid data");
       if (
@@ -37,7 +38,7 @@ export function SettingsPage() {
         )
       )
         return;
-      store.replaceData(parsed, parsed.version !== 4 && parsed.version !== 5);
+      store.replaceData(parsed, parsed.version !== 4 && parsed.version !== 5 && parsed.version !== 6, parsed.version !== 6);
       setMessage("မှတ်တမ်းများ ထည့်သွင်းပြီးပါပြီ။");
     } catch {
       setMessage("ဖိုင်ပုံစံ မမှန်ပါ။ မှတ်တမ်းများကို မပြောင်းလဲခဲ့ပါ။");
@@ -77,6 +78,23 @@ export function SettingsPage() {
             }
           />
         </label>
+        <fieldset className="setting-row bead-style-setting">
+          <legend className="sr-only">ပုတီးစေ့အရောင်</legend>
+          <strong>ပုတီးစေ့အရောင်</strong>
+          <div className="bead-style-options">
+            {([['gold', 'ရွှေရောင်'], ['jade', 'ကျောက်စိမ်း'], ['wood', 'သစ်သား']] as const).map(([value, label]) => (
+              <label key={value} title={label}>
+                <input type="radio" name="bead-style" value={value} checked={store.settings.beadStyle === value} onChange={() => update({ beadStyle: value })} />
+                <span className={`bead-swatch ${value}`} />
+                <span>{label}</span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+        <label className="setting-row">
+          <strong>ပုတီးစေ့အလင်း</strong>
+          <input className="toggle" type="checkbox" checked={store.settings.glowEffect} onChange={(event) => update({ glowEffect: event.target.checked })} />
+        </label>
         <label className="setting-row">
           <span>
             <strong>တုန်ခါမှု</strong>
@@ -101,7 +119,13 @@ export function SettingsPage() {
             onChange={(event) => update({ sound: event.target.checked })}
           />
         </label>
-        <RoundSettings beadsPerRound={store.settings.beadsPerRound} goalRounds={store.settings.goalRounds} onChange={(beadsPerRound, goalRounds) => update({ beadsPerRound, goalRounds, defaultTarget: beadsPerRound })} />
+        <RoundSettings
+          beadsPerRound={store.settings.beadsPerRound}
+          goalRounds={store.settings.goalRounds}
+          onChange={(beadsPerRound, goalRounds) =>
+            update({ beadsPerRound, goalRounds, defaultTarget: beadsPerRound })
+          }
+        />
         <ReminderSettings />
       </section>
       <section className="settings-section">

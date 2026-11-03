@@ -12,6 +12,9 @@ export const defaultCategories: Category[] = [
     { id: 'buddha-8', name: 'ဗုဒ္ဓေါ', description: 'သစ္စာလေးပါးကို သိတော်မူ၍ သိစေတော်မူသော' },
     { id: 'buddha-9', name: 'ဘဂဝါ', description: 'ဘုန်းဂုဏ်တော်နှင့် ပြည့်စုံတော်မူသော' },
   ] },
+  { id: 'arahan-siddhi', name: 'အရဟံ သိဒ္ဓိ', mode: 'single', items: [
+    { id: 'arahan-siddhi-1', name: 'အရဟံ သိဒ္ဓိ', fullText: '' },
+  ] },
   // { id: 'dhamma', name: 'တရားဂုဏ်တော် ၆ ပါး', mode: 'sequence', items: [
   //   { id: 'dhamma-1', name: 'သွာက္ခာတော' }, { id: 'dhamma-2', name: 'သန္ဒိဋ္ဌိကော' },
   //   { id: 'dhamma-3', name: 'အကာလိကော' }, { id: 'dhamma-4', name: 'ဧဟိပဿိကော' },
@@ -37,5 +40,5 @@ export const defaultCategories: Category[] = [
   ] },
 ]
 
-export const defaultSettings: Settings = { theme: 'light', vibration: true, sound: false, defaultTarget: 108, beadsPerRound: 108, goalRounds: 9, reminders: false }
+export const defaultSettings: Settings = { theme: 'light', vibration: true, sound: false, defaultTarget: 108, beadsPerRound: 108, goalRounds: 9, reminders: false, chantTextSize: 20, beadStyle: 'gold', glowEffect: true }
 

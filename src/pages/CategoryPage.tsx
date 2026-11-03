@@ -14,6 +14,7 @@ export function CategoryPage() {
   const [editing, setEditing] = useState<ChantItem | "new" | null>(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [fullText, setFullText] = useState("");
   const [deleting, setDeleting] = useState<ChantItem | null>(null);
   if (!category)
     return (
@@ -27,6 +28,7 @@ export function CategoryPage() {
   function edit(item: ChantItem | "new") {
     setName(item === "new" ? "" : item.name);
     setDescription(item === "new" ? "" : (item.description ?? ""));
+    setFullText(item === "new" ? "" : (item.fullText ?? ""));
     setEditing(item);
   }
   function save() {
@@ -36,6 +38,7 @@ export function CategoryPage() {
       ...(editing === "new" ? { id: crypto.randomUUID() } : editing),
       name: trimmed,
       description: description.trim() || undefined,
+      fullText,
     };
     setCategories((previous) =>
       previous.map((entry) =>
@@ -68,7 +71,7 @@ export function CategoryPage() {
           <p>{number(category.items.length)} မျိုး ရှိပါသည်</p>
         </div>
         <div className="category-heading-actions">
-          {category.items.length > 0 &&
+          {category.items.length > 1 &&
             !category.items.some((item) => item.group) && (
               <Link
                 className="button-outline"
@@ -120,6 +123,16 @@ export function CategoryPage() {
             maxLength={500}
             value={description}
             onChange={(event) => setDescription(event.target.value)}
+          />
+          <label className="field-label mt-4" htmlFor="item-full-text">
+            စာသားအပြည့်အစုံ
+          </label>
+          <textarea
+            id="item-full-text"
+            className="text-input"
+            rows={6}
+            value={fullText}
+            onChange={(event) => setFullText(event.target.value)}
           />
         </ConfirmDialog>
       )}
