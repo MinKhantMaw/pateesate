@@ -62,7 +62,7 @@ export function validData(value: unknown): value is AppData {
   if (!Object.values(value.counts).every(count => object(count) && integer(count.total) && integer(count.rounds))) return false
   if (!Object.entries(value.history).every(([day, entries]) => /^\d{4}-\d{2}-\d{2}$/.test(day) && object(entries) && Object.values(entries).every(integer))) return false
   const settings = value.settings
-  if (!['light', 'dark'].includes(settings.theme as string) || typeof settings.vibration !== 'boolean' || typeof settings.sound !== 'boolean' || !target(settings.defaultTarget) || (settings.beadsPerRound !== undefined && !target(settings.beadsPerRound)) || (settings.goalRounds !== undefined && !target(settings.goalRounds))) return false
+  if (!['light', 'dark'].includes(settings.theme as string) || typeof settings.vibration !== 'boolean' || typeof settings.sound !== 'boolean' || !target(settings.defaultTarget) || (settings.beadsPerRound !== undefined && !target(settings.beadsPerRound)) || (settings.goalRounds !== undefined && !target(settings.goalRounds)) || (settings.reminders !== undefined && typeof settings.reminders !== 'boolean') || (settings.lastReminderSlot !== undefined && typeof settings.lastReminderSlot !== 'string')) return false
   if (value.groupRounds !== undefined && (!object(value.groupRounds) || !Object.values(value.groupRounds).every(integer))) return false
   if (value.goalHistory !== undefined && (!object(value.goalHistory) || !Object.entries(value.goalHistory).every(([day, entries]) => /^\d{4}-\d{2}-\d{2}$/.test(day) && Array.isArray(entries) && entries.every(entry => object(entry) && typeof entry.id === 'string' && target(entry.goalRounds) && target(entry.beadsPerRound))))) return false
   const session = value.session

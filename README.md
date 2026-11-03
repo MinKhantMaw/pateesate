@@ -21,6 +21,14 @@ Terminal တွင် ပြထားသော local URL ကို browser ဖ�
 
 HashRouter နှင့် relative asset paths သုံးထားသောကြောင့် static hosting နှင့် repository subpath တွင် rewrite rule မလိုပါ။ Wake lock၊ vibration နှင့် browser API အချို့အတွက် HTTPS သို့မဟုတ် localhost လိုအပ်နိုင်သည်။ Noto Sans Myanmar ကို Google Fonts မှရယူပြီး မရလျှင် စက်တွင်ရှိသော Pyidaungsu/အခြား Myanmar font သုံးသည်။
 
+## သတိပေးချက် သတ်မှတ်ရန်
+
+- `.env.example` ပါ `VITE_ONESIGNAL_APP_ID` ကို OneSignal App ID ဖြင့် build environment သို့ ထည့်ပါ။ OneSignal တွင် Web Push ကို Custom Code အဖြစ် သတ်မှတ်ပြီး site URL ကို အသုံးပြုမည့် HTTPS origin နှင့် တူညီစေပါ။ Localhost စမ်းသပ်ရန် OneSignal app သီးခြားသုံးပါ။
+- Dashboard တွင် အလိုအလျောက် permission prompt မဖွင့်ပါနှင့်။ နေ့စဉ် ၀၈:၀၀ နှင့် ၂၀:၀၀ (`Asia/Yangon`) အတွက် push message များကို သတ်မှတ်ပါ။ Launch URL ကို app ၏ Home URL (ဥပမာ `https://example.com/#/`၊ subpath ရှိလျှင် ထို path ပါဝင်ရမည်) အဖြစ် သတ်မှတ်ပါ။
+- မနက်စာသား: “မင်္ဂလာပါ 🙏 ဒီနေ့ ပုတီးစိပ်ဖို့ အချိန်ရပါပြီ”။ ညနေစာသား: “ညနေစောင်းပါပြီ 🙏 ဒီနေ့ ပုတီးစိပ်ပြီးပြီလား”။ Push ပေးပို့ခြင်းနှင့် အချိန်ဇယားကို OneSignal က ဆောင်ရွက်သည်။
+- iOS 16.4+ တွင် Safari မှ Add to Home Screen လုပ်ပြီးမှ push ခွင့်ပြုနိုင်သည်။ App ဖွင့်ထားစဉ် push မရနိုင်သော်လည်း သတိပေးချက်ဖွင့်ထားပြီး ထိုနေ့ စိပ်ထားခြင်းမရှိလျှင် သတ်မှတ်ချိန်၌ app အတွင်း ပြမည်။ နေ့စဉ် history ကို စက်၏ local date ဖြင့် စစ်သည်။
+- PWA worker နှင့် OneSignal worker သည် သီးခြား scope များဖြစ်သည်။ OneSignal worker ကို `onesignal/OneSignalSDKWorker.js` မှ တူညီသော origin ပေါ်တွင် JavaScript အဖြစ် ပေးပို့ရမည်။ Dashboard message တွင် သီးခြား URL ထည့်လျှင် default Home URL ကို အစားထိုးမည်။
+
 ## ဖိုင်ဖွဲ့စည်းပုံ
 
 ```text

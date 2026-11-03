@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { Download, Upload, Trash2 } from "lucide-react";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { RoundSettings } from "../components/RoundSettings";
+import { ReminderSettings } from "../components/ReminderSettings";
 import { defaultCategories, defaultSettings } from "../data/defaultCategories";
 import { defaultCombos } from "../data/defaultCombos";
 import { useApp } from "../store/AppContextValue";
@@ -101,6 +102,7 @@ export function SettingsPage() {
           />
         </label>
         <RoundSettings beadsPerRound={store.settings.beadsPerRound} goalRounds={store.settings.goalRounds} onChange={(beadsPerRound, goalRounds) => update({ beadsPerRound, goalRounds, defaultTarget: beadsPerRound })} />
+        <ReminderSettings />
       </section>
       <section className="settings-section">
         <div className="section-heading">

@@ -29,6 +29,9 @@ h1, h2, h3, p { margin: 0; }
 .header-blessing { margin-left: auto; color: var(--muted); font-size: 12px; }
 .mobile-nav { display: none; }
 .storage-warning { background: #fff0c8; color: #634310; padding: 12px 24px; text-align: center; font-size: 14px; }
+.reminder-status { color: var(--muted); font-size: 12px; padding: 4px 0 12px; }
+.reminder-banner { display: flex; align-items: center; justify-content: center; gap: 12px; padding: 8px 20px; color: var(--text); background: var(--green-soft); font-size: 14px; }
+.reminder-banner span { overflow-wrap: anywhere; }
 .page-wrap { width: min(1124px, calc(100% - 48px)); margin: 0 auto; padding: 66px 0 80px; flex: 1; }
 .narrow-page { max-width: 850px; }
 .page-heading { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 56px; }

@@ -7,9 +7,10 @@ import { CategoryPage } from "./pages/CategoryPage";
 import { ComboCounterPage, CounterPage } from "./pages/CounterPage";
 import { StatsPage } from "./pages/StatsPage";
 import { SettingsPage } from "./pages/SettingsPage";
+import { ReminderBanner } from "./components/ReminderBanner";
 
 function Layout() {
-  const { storageError } = useApp();
+  const { storageError, settings } = useApp();
   const navigation = [
     { to: "/", label: "ပုတီးစိပ်", icon: CircleDot },
     { to: "/stats", label: "မှတ်တမ်း", icon: BarChart3 },
@@ -53,6 +54,7 @@ function Layout() {
           ထုတ်ယူထားပါ။
         </div>
       )}
+      <ReminderBanner key={settings.reminders ? "on" : "off"} />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/category/:categoryId" element={<CategoryPage />} />
