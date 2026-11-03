@@ -4,9 +4,11 @@ import {
   ChevronLeft,
   ChevronRight,
   RotateCcw,
+  Settings,
+  Star,
   Undo2,
 } from "lucide-react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { CounterButton } from "../components/CounterButton";
 import { GoalDialog } from "../components/GoalDialog";
@@ -20,7 +22,7 @@ import { useWakeLock } from "../hooks/useWakeLock";
 import { useApp } from "../store/AppContextValue";
 import { availableCategories, sequenceKey } from "../utils/data";
 import { defaultCombos } from "../data/defaultCombos";
-import { number } from "../utils/date";
+import { localizeDigits, number } from "../utils/date";
 import type {
   Category,
   ChantItem,
@@ -32,9 +34,14 @@ import type {
 export function CounterPage() {
   const { categoryId, itemId = "" } = useParams();
   const store = useApp();
-  const category = store.categories.find((entry) => entry.id === categoryId);
+  const { setSettings, storageError } = store;
+  const location = useLocation();
+  const category = availableCategories(store.categories).find((entry) => entry.id === categoryId);
   const item = category?.items.find((entry) => entry.id === itemId);
-  const wake = useWakeLock();
+  const wake = useWakeLock(store.settings.wakeLock);
+  useEffect(() => {
+    if (!storageError) setSettings(previous => previous.lastCounterPath === location.pathname ? previous : { ...previous, lastCounterPath: location.pathname });
+  }, [location.pathname, setSettings, storageError]);
   if (!category || !item)
     return (
       <main className="page-wrap">
@@ -71,8 +78,13 @@ export function CounterPage() {
 export function ComboCounterPage() {
   const { comboId = "" } = useParams();
   const store = useApp();
+  const { setSettings, storageError } = store;
+  const location = useLocation();
   const combo = store.combos.find((entry) => entry.id === comboId);
-  const wake = useWakeLock();
+  const wake = useWakeLock(store.settings.wakeLock);
+  useEffect(() => {
+    if (!storageError) setSettings(previous => previous.lastCounterPath === location.pathname ? previous : { ...previous, lastCounterPath: location.pathname });
+  }, [location.pathname, setSettings, storageError]);
   const owners = new Map(
     availableCategories(store.categories).flatMap((category) =>
       category.items.map((item) => [item.id, { category, item }] as const),
@@ -172,15 +184,24 @@ function ChantText({ text }: { text?: string }) {
   const { settings, setSettings } = useApp();
   if (!text?.trim()) return null;
   const size = settings.chantTextSize;
+  const sizes = [18, 20, 24, 28];
+  const index = sizes.indexOf(size);
   return (
     <section className="chant-text-card" aria-label="စာသားအပြည့်အစုံ">
       <div className="chant-text-controls">
-        <button type="button" title="စာလုံးသေးမည်" aria-label="စာလုံးသေးမည်" disabled={size <= 14} onClick={() => setSettings(previous => ({ ...previous, chantTextSize: Math.max(14, previous.chantTextSize - 2) }))}>A-</button>
-        <button type="button" title="စာလုံးကြီးမည်" aria-label="စာလုံးကြီးမည်" disabled={size >= 32} onClick={() => setSettings(previous => ({ ...previous, chantTextSize: Math.min(32, previous.chantTextSize + 2) }))}>A+</button>
+        <button type="button" title="စာလုံးသေးမည်" aria-label="စာလုံးသေးမည်" disabled={index <= 0} onClick={() => setSettings(previous => ({ ...previous, chantTextSize: sizes[index - 1] }))}>A-</button>
+        <button type="button" title="စာလုံးကြီးမည်" aria-label="စာလုံးကြီးမည်" disabled={index >= sizes.length - 1} onClick={() => setSettings(previous => ({ ...previous, chantTextSize: sizes[index + 1] }))}>A+</button>
       </div>
-      <div className="chant-text-content" tabIndex={0} style={{ fontSize: size }}>{text}</div>
+      <div className="chant-text-content" tabIndex={0} style={{ fontSize: size }}>{localizeDigits(text)}</div>
     </section>
   );
+}
+
+function PinButton({ item }: { item: ChantItem }) {
+  const { settings, setSettings } = useApp();
+  const pinned = settings.pinnedItems.includes(item.id);
+  const label = pinned ? `${item.name} အကြိုက်ဆုံးမှ ဖယ်မည်` : `${item.name} အကြိုက်ဆုံးထားမည်`;
+  return <button className="icon-button" title={label} aria-label={label} aria-pressed={pinned} onClick={() => setSettings(previous => ({ ...previous, pinnedItems: pinned ? previous.pinnedItems.filter(id => id !== item.id) : [...previous.pinnedItems, item.id] }))}><Star size={20} fill={pinned ? "currentColor" : "none"} /></button>;
 }
 
 function RoundIndicator({ rounds, goal }: { rounds: number; goal: number }) {
@@ -253,14 +274,16 @@ function CounterScreen({
           <ArrowLeft size={18} /> နောက်သို့
         </Link>
         <span className="counter-category">{comboName || category.name}</span>
+        <PinButton item={item} />
+        <Link className="icon-button" to="/settings" aria-label="ဆက်တင်များ" title="ဆက်တင်များ"><Settings size={20} /></Link>
       </div>
       <ModeSwitch mode="single" onChange={onModeChange} />
       <div className="counter-heading">
         <div className="eyebrow justify-center">
           <span className="eyebrow-dot" /> ယခုစိပ်နေသည်
         </div>
-        <h1>{item.name}</h1>
-        {item.description && <p>{item.description}</p>}
+        <h1>{localizeDigits(item.name)}</h1>
+        {item.description && <p>{localizeDigits(item.description)}</p>}
       </div>
       <ChantText text={item.fullText} />
       <div className="counter-stage">
@@ -286,7 +309,7 @@ function CounterScreen({
           />
       </div>
       <div className="round-message" aria-live="polite">
-        {completed ? "၁ ပတ်ပြည့်ပါပြီ" : "\u00a0"}
+        {completed ? `${number(1)} ပတ်ပြည့်ပါပြီ` : "\u00a0"}
       </div>
       <RoundIndicator rounds={roundsDone} goal={goalRounds} />
       <div className="counter-summary">
@@ -369,7 +392,7 @@ function CounterScreen({
             className="toggle"
             checked={wake.enabled}
             disabled={!wake.supported}
-            onChange={(event) => wake.setEnabled(event.target.checked)}
+            onChange={(event) => store.setSettings(previous => ({ ...previous, wakeLock: event.target.checked }))}
           />
         </label>
       </div>
@@ -487,9 +510,9 @@ function SequenceScreen({
       ? current.id.startsWith("combo-saranagon-")
         ? "သရဏဂုံ"
         : current.id.startsWith("combo-guna9-")
-          ? "ဂုဏ်တော် ၉ ပါး"
+          ? `ဂုဏ်တော် ${number(9)} ပါး`
           : current.id.startsWith("combo-paccaya-")
-            ? "၂၄ ပစ္စည်း"
+            ? `${number(24)} ပစ္စည်း`
             : ""
       : "";
   const [completed, setCompleted] = useState(false);
@@ -555,6 +578,8 @@ function SequenceScreen({
         <span className="counter-category">
           {combo?.name || entry.group || category.name}
         </span>
+        <PinButton item={current} />
+        <Link className="icon-button" to="/settings" aria-label="ဆက်တင်များ" title="ဆက်တင်များ"><Settings size={20} /></Link>
       </div>
       <ModeSwitch mode="sequence" onChange={switchMode} />
       <div className="counter-heading sequence-heading">
@@ -565,8 +590,8 @@ function SequenceScreen({
           key={`${sequence.currentIndex}:${current.id}`}
           className="sequence-name"
         >
-          <h1>{current.name}</h1>
-          {current.description && <p>{current.description}</p>}
+          <h1>{localizeDigits(current.name)}</h1>
+          {current.description && <p>{localizeDigits(current.description)}</p>}
         </div>
         {steps[sequence.currentIndex].repeat > 1 && (
           <p className="sequence-repeat">
@@ -574,7 +599,7 @@ function SequenceScreen({
             {number(steps[sequence.currentIndex].repeat)}
           </p>
         )}
-        <p className="sequence-next">နောက်တစ်ခု: {next.name}</p>
+        <p className="sequence-next">နောက်တစ်ခု: {localizeDigits(next.name)}</p>
       </div>
       <div className="sequence-progress">
         <span>
@@ -621,7 +646,7 @@ function SequenceScreen({
           />
       </div>
       <div className="round-message" aria-live="polite">
-        {completed ? "၁ ပတ်ပြည့်ပါပြီ" : "\u00a0"}
+        {completed ? `${number(1)} ပတ်ပြည့်ပါပြီ` : "\u00a0"}
       </div>
       <RoundIndicator rounds={sequence.passes} goal={goalRounds} />
       <div className="counter-summary sequence-summary">
@@ -691,7 +716,7 @@ function SequenceScreen({
               onClick={() => move(index)}
             >
               <span>{number(index + 1)}</span>
-              {item.name}
+              {localizeDigits(item.name)}
               {steps[index].repeat > 1 && ` × ${number(steps[index].repeat)}`}
             </button>
           ))}
@@ -715,7 +740,7 @@ function SequenceScreen({
             className="toggle"
             checked={wake.enabled}
             disabled={!wake.supported}
-            onChange={(event) => wake.setEnabled(event.target.checked)}
+            onChange={(event) => store.setSettings(previous => ({ ...previous, wakeLock: event.target.checked }))}
           />
         </label>
       </div>

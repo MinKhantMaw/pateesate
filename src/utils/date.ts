@@ -11,4 +11,14 @@ export function shiftDay(date: Date, days: number): Date {
   return result
 }
 
-export const number = (value: number) => new Intl.NumberFormat('en-US').format(value).replace(/[0-9]/g, digit => '၀၁၂၃၄၅၆၇၈၉'[Number(digit)])
+let burmeseNumerals = true
+export const setBurmeseNumerals = (enabled: boolean) => { burmeseNumerals = enabled }
+export const localizeDigits = (text: string) => text.replace(/[0-9၀-၉]/g, digit => {
+  const index = '၀၁၂၃၄၅၆၇၈၉'.indexOf(digit)
+  const value = index < 0 ? Number(digit) : index
+  return burmeseNumerals ? '၀၁၂၃၄၅၆၇၈၉'[value] : String(value)
+})
+export const number = (value: number) => {
+  const formatted = new Intl.NumberFormat('en-US').format(value)
+  return burmeseNumerals ? formatted.replace(/[0-9]/g, digit => '၀၁၂၃၄၅၆၇၈၉'[Number(digit)]) : formatted
+}

@@ -4,7 +4,7 @@ import { Link, useParams } from "react-router-dom";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { ItemList } from "../components/ItemList";
 import { useApp } from "../store/AppContextValue";
-import { number } from "../utils/date";
+import { localizeDigits, number } from "../utils/date";
 import type { ChantItem } from "../types";
 
 export function CategoryPage() {
@@ -67,7 +67,7 @@ export function CategoryPage() {
           <div className="eyebrow">
             <span className="eyebrow-dot" /> စိပ်ရန်ရွေးချယ်ပါ
           </div>
-          <h1>{category.name}</h1>
+          <h1>{localizeDigits(category.name)}</h1>
           <p>{number(category.items.length)} မျိုး ရှိပါသည်</p>
         </div>
         <div className="category-heading-actions">

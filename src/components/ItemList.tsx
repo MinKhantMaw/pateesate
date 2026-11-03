@@ -1,7 +1,7 @@
-import { ChevronRight, Pencil, Play, Trash2 } from "lucide-react";
+import { BookOpen, ChevronRight, Pencil, Play, Star, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { ChantItem, Counts } from "../types";
-import { number } from "../utils/date";
+import { localizeDigits, number } from "../utils/date";
 import { useApp } from "../store/AppContextValue";
 
 export function ItemList({
@@ -17,10 +17,11 @@ export function ItemList({
   onEdit: (item: ChantItem) => void;
   onDelete: (item: ChantItem) => void;
 }) {
-  const { setCounterMode } = useApp();
+  const { setCounterMode, settings, setSettings } = useApp();
   if (!items.length)
     return (
       <div className="empty-state">
+        <BookOpen size={28} aria-hidden="true" />
         ဤအမျိုးအစားတွင် စိပ်ရန် စာသား မရှိသေးပါ။
       </div>
     );
@@ -36,7 +37,7 @@ export function ItemList({
         <section key={group}>
           {hasGroups && (
             <div className="item-group-heading">
-              <h2>{group || "အခြားစာသားများ"}</h2>
+              <h2>{localizeDigits(group || "အခြားစာသားများ")}</h2>
               <Link
                 className="button-outline"
                 to={`/category/${categoryId}/item/${groupItems[0].id}`}
@@ -57,10 +58,10 @@ export function ItemList({
                 >
                   <span className="item-number">{number(index + 1)}</span>
                   <span className="min-w-0 flex-1">
-                    <span className="item-name">{item.name}</span>
+                    <span className="item-name">{localizeDigits(item.name)}</span>
                     {item.description && (
                       <span className="item-description">
-                        {item.description}
+                        {localizeDigits(item.description)}
                       </span>
                     )}
                   </span>
@@ -71,6 +72,7 @@ export function ItemList({
                   <ChevronRight size={18} className="shrink-0 text-muted" />
                 </Link>
                 <div className="item-actions">
+                  <button className="icon-button" title={settings.pinnedItems.includes(item.id) ? "အကြိုက်ဆုံးမှ ဖယ်မည်" : "အကြိုက်ဆုံးထားမည်"} aria-label={`${item.name} ${settings.pinnedItems.includes(item.id) ? "အကြိုက်ဆုံးမှ ဖယ်မည်" : "အကြိုက်ဆုံးထားမည်"}`} aria-pressed={settings.pinnedItems.includes(item.id)} onClick={() => setSettings(previous => ({ ...previous, pinnedItems: previous.pinnedItems.includes(item.id) ? previous.pinnedItems.filter(id => id !== item.id) : [...previous.pinnedItems, item.id] }))}><Star size={18} fill={settings.pinnedItems.includes(item.id) ? "currentColor" : "none"} /></button>
                   <button
                     className="icon-button"
                     title="ပြင်မည်"

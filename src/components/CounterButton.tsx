@@ -41,6 +41,7 @@ export function CounterButton({ count, target, rounds, style, glow, disabled, on
   const visualCount = Math.min(target, 108);
   const litCount = Math.floor(count * visualCount / target);
   const radius = Math.min(13, 440 / visualCount);
+  const formattedCount = number(count);
 
   useEffect(() => {
     const completed = rounds > previous.current.rounds && count === 0;
@@ -74,14 +75,13 @@ export function CounterButton({ count, target, rounds, style, glow, disabled, on
         <path className="guru-tassel" d="M200 37 L200 25 M194 25 Q200 21 206 25 L208 14 M196 25 L192 14 M200 25 L200 12 M204 25 L204 14" />
         <circle className="guru-bead" cx="200" cy="43" r={Math.max(9, radius + 3)} fill={`url(#${gradient})`} />
       </svg>
-      <button className="bead-button" onClick={onClick} disabled={disabled} aria-label="ပုတီး တစ်ကြိမ်စိပ်မည်">
-        <span className="bead-inner">
-          <span className="bead-small">ယခုပတ်:</span>
-          <strong className="bead-count">{number(count)}</strong>
-          <span className="bead-target">/ {number(target)}</span>
-          <span className="bead-hint">နှိပ်၍ စိပ်ပါ</span>
-        </span>
-      </button>
+      <span className="bead-inner" aria-hidden="true">
+        <span className="bead-small">ယခုပတ်:</span>
+        <strong className="bead-count" style={{ "--count-length": formattedCount.length } as CSSProperties}>{formattedCount}</strong>
+        <span className="bead-target">/ {number(target)}</span>
+        <span className="bead-hint">နှိပ်၍ စိပ်ပါ</span>
+      </span>
+      <button className="bead-button" onClick={onClick} disabled={disabled} aria-label="ပုတီး တစ်ကြိမ်စိပ်မည်" />
       <span className="sr-only" aria-live="polite">ယခုပတ် {number(count)} / {number(target)}</span>
     </div>
   );

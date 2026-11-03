@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 
-export function useWakeLock() {
-  const [enabled, setEnabled] = useState(false)
+export function useWakeLock(enabled: boolean) {
   const [error, setError] = useState(false)
   const supported = typeof navigator !== 'undefined' && 'wakeLock' in navigator
   useEffect(() => {
@@ -21,5 +20,5 @@ export function useWakeLock() {
     document.addEventListener('visibilitychange', acquire)
     return () => { active = false; document.removeEventListener('visibilitychange', acquire); if (sentinel) void sentinel.release() }
   }, [enabled, supported])
-  return { enabled, setEnabled, supported, error }
+  return { enabled, supported, error }
 }

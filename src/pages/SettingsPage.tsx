@@ -1,5 +1,6 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Download, Upload, Trash2 } from "lucide-react";
+import { useLocation } from "react-router-dom";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { RoundSettings } from "../components/RoundSettings";
 import { ReminderSettings } from "../components/ReminderSettings";
@@ -12,8 +13,13 @@ import type { Settings } from "../types";
 export function SettingsPage() {
   const store = useApp();
   const fileInput = useRef<HTMLInputElement>(null);
+  const exportSection = useRef<HTMLElement>(null);
+  const location = useLocation();
   const [resetStep, setResetStep] = useState(0);
   const [message, setMessage] = useState("");
+  useEffect(() => {
+    if (new URLSearchParams(location.search).has("export")) exportSection.current?.scrollIntoView();
+  }, [location.search]);
   function update(patch: Partial<Settings>) {
     store.setSettings((previous) => ({ ...previous, ...patch }));
   }
@@ -65,19 +71,13 @@ export function SettingsPage() {
           </div>
         </div>
         <label className="setting-row">
-          <span>
-            <strong>အမှောင်ပုံစံ</strong>
-            <small>မျက်နှာပြင်အရောင် ပြောင်းမည်</small>
-          </span>
-          <input
-            className="toggle"
-            type="checkbox"
-            checked={store.settings.theme === "dark"}
-            onChange={(event) =>
-              update({ theme: event.target.checked ? "dark" : "light" })
-            }
-          />
+          <strong>မျက်နှာပြင်အရောင်</strong>
+          <select className="text-input theme-select" value={store.settings.theme} onChange={event => update({ theme: event.target.value as Settings["theme"] })}>
+            <option value="light">အလင်း</option><option value="dark">အမှောင်</option><option value="night">ညအတွက်</option>
+          </select>
         </label>
+        <label className="setting-row"><strong>မြန်မာဂဏန်း</strong><input className="toggle" type="checkbox" checked={store.settings.burmeseNumerals} onChange={event => update({ burmeseNumerals: event.target.checked })} /></label>
+        <label className="setting-row"><strong>စိပ်နေစဉ် မျက်နှာပြင်ဖွင့်ထားမည်</strong><input className="toggle" type="checkbox" checked={store.settings.wakeLock} onChange={event => update({ wakeLock: event.target.checked })} /></label>
         <fieldset className="setting-row bead-style-setting">
           <legend className="sr-only">ပုတီးစေ့အရောင်</legend>
           <strong>ပုတီးစေ့အရောင်</strong>
@@ -128,7 +128,7 @@ export function SettingsPage() {
         />
         <ReminderSettings />
       </section>
-      <section className="settings-section">
+      <section className="settings-section" ref={exportSection}>
         <div className="section-heading">
           <div>
             <span className="section-kicker">သိမ်းဆည်းခြင်း</span>
@@ -142,18 +142,21 @@ export function SettingsPage() {
           </span>
           <button
             className="button-outline"
-            onClick={() =>
+            onClick={() => {
+              const lastBackupAt = new Date().toISOString();
               downloadData({
                 categories: store.categories,
                 combos: store.combos,
                 counts: store.counts,
                 history: store.history,
-                settings: store.settings,
+                settings: { ...store.settings, lastBackupAt },
                 session: store.sessionData,
                 groupRounds: store.groupRounds,
                 goalHistory: store.goalHistory,
-              })
-            }
+              });
+              update({ lastBackupAt });
+              setMessage("မှတ်တမ်း ထုတ်ယူပြီးပါပြီ။");
+            }}
           >
             <Download size={18} /> ထုတ်ယူမည်
           </button>

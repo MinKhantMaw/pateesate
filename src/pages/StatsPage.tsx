@@ -4,11 +4,12 @@ import {
   CalendarDays,
   ChartNoAxesColumnIncreasing,
   Sparkles,
+  BookOpen,
 } from "lucide-react";
 import { StatsChart } from "../components/StatsChart";
 import { useApp } from "../store/AppContextValue";
 import { availableCategories, sequenceKey } from "../utils/data";
-import { dateKey, number, shiftDay } from "../utils/date";
+import { dateKey, localizeDigits, number, shiftDay } from "../utils/date";
 
 export function StatsPage() {
   const { categories, combos, counts, history, groupRounds, goalHistory } =
@@ -46,7 +47,7 @@ export function StatsPage() {
   }
   const names = new Map(
     availableCategories(categories).flatMap((category) =>
-      category.items.map((item) => [item.id, item.name] as const),
+      category.items.map((item) => [item.id, localizeDigits(item.name)] as const),
     ),
   );
   const groupNames = new Map(
@@ -56,12 +57,12 @@ export function StatsPage() {
         (group) =>
           [
             sequenceKey(category.id, group),
-            group ? `${category.name} · ${group}` : category.name,
+            localizeDigits(group ? `${category.name} · ${group}` : category.name),
           ] as const,
       ),
     ),
   );
-  for (const combo of combos) groupNames.set(combo.id, combo.name);
+  for (const combo of combos) groupNames.set(combo.id, localizeDigits(combo.name));
   const stats = [
     { label: "ဒီနေ့", value: sumDays(todayKey), icon: Sparkles },
     { label: "ဒီအပတ်", value: sumDays(weekStart), icon: CalendarDays },
@@ -143,7 +144,7 @@ export function StatsPage() {
               )),
             )}
           {!Object.values(goalHistory).some((entries) => entries.length) && (
-            <div className="empty-state">မှတ်တမ်း မရှိသေးပါ။</div>
+            <div className="empty-state"><BookOpen size={28} aria-hidden="true" />မှတ်တမ်း မရှိသေးပါ။</div>
           )}
         </div>
       </section>
@@ -151,7 +152,7 @@ export function StatsPage() {
         <div className="section-heading">
           <div>
             <span className="section-kicker">နေ့စဉ်မှတ်တမ်း</span>
-            <h2>လွန်ခဲ့သော ၇ ရက်</h2>
+            <h2>လွန်ခဲ့သော {number(7)} ရက်</h2>
           </div>
         </div>
         <StatsChart history={history} today={today} />
@@ -176,7 +177,7 @@ export function StatsPage() {
               </div>
             ))}
           {!Object.keys(counts).length && (
-            <div className="empty-state">မှတ်တမ်း မရှိသေးပါ။</div>
+            <div className="empty-state"><BookOpen size={28} aria-hidden="true" />မှတ်တမ်း မရှိသေးပါ။</div>
           )}
         </div>
       </section>
@@ -198,7 +199,7 @@ export function StatsPage() {
             </div>
           ))}
           {!Object.keys(groupRounds).length && (
-            <div className="empty-state">မှတ်တမ်း မရှိသေးပါ။</div>
+            <div className="empty-state"><BookOpen size={28} aria-hidden="true" />မှတ်တမ်း မရှိသေးပါ။</div>
           )}
         </div>
       </section>
@@ -234,7 +235,7 @@ export function StatsPage() {
             ))}
           {!Object.values(history).some((entries) =>
             Object.values(entries).some((value) => value > 0),
-          ) && <div className="empty-state">မှတ်တမ်း မရှိသေးပါ။</div>}
+          ) && <div className="empty-state"><BookOpen size={28} aria-hidden="true" />မှတ်တမ်း မရှိသေးပါ။</div>}
         </div>
       </section>
     </main>

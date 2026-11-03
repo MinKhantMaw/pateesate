@@ -7,6 +7,7 @@ import {
   pushSupported,
 } from "../utils/push";
 import { pwaRegistrationFailed } from "../utils/pwa";
+import { number } from "../utils/date";
 
 export function ReminderSettings() {
   const { settings, setSettings } = useApp();
@@ -84,7 +85,7 @@ export function ReminderSettings() {
       <label className="setting-row">
         <span>
           <strong>နေ့စဉ်သတိပေးချက်</strong>
-          <small>မနက် ၈ နာရီနှင့် ည ၈ နာရီ</small>
+          <small>မနက် {number(8)} နာရီနှင့် ည {number(8)} နာရီ</small>
         </span>
         <input
           className="toggle"

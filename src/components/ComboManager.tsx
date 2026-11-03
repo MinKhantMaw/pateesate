@@ -2,6 +2,7 @@ import { useState } from "react";
 import {
   ArrowDown,
   ArrowUp,
+  ListMusic,
   Pencil,
   Play,
   Plus,
@@ -13,7 +14,7 @@ import { ConfirmDialog } from "./ConfirmDialog";
 import { defaultCombos } from "../data/defaultCombos";
 import { useApp } from "../store/AppContextValue";
 import { availableCategories } from "../utils/data";
-import { number } from "../utils/date";
+import { localizeDigits, number } from "../utils/date";
 import type { Combo, ComboStep } from "../types";
 
 export function ComboManager() {
@@ -53,7 +54,7 @@ export function ComboManager() {
           step.repeat > 1000000,
       )
     ) {
-      setError("အမည်၊ စာသားနှင့် ၁ မှ ၁,၀၀၀,၀၀၀ အတွင်း အကြိမ်ရေကို ဖြည့်ပါ။");
+      setError(`အမည်၊ စာသားနှင့် ${number(1)} မှ ${number(1000000)} အတွင်း အကြိမ်ရေကို ဖြည့်ပါ။`);
       return;
     }
     const combo = {
@@ -121,7 +122,7 @@ export function ComboManager() {
           return (
             <article className="combo-row" key={combo.id}>
               <div className="combo-info">
-                <strong>{combo.name}</strong>
+                <strong>{localizeDigits(combo.name)}</strong>
                 <span>
                   {number(combo.steps.length)} မျိုး ·{" "}
                   {number(groupRounds[combo.id] ?? 0)} ပတ်
@@ -170,7 +171,7 @@ export function ComboManager() {
           );
         })}
         {!combos.length && (
-          <div className="empty-state">အစီအစဉ် မရှိသေးပါ။</div>
+          <div className="empty-state"><ListMusic size={28} aria-hidden="true" />အစီအစဉ် မရှိသေးပါ။</div>
         )}
       </div>
       {editing && (
@@ -244,11 +245,11 @@ export function ComboManager() {
                     <option value={step.itemId}>ဖျက်ထားသော စာသား</option>
                   )}
                   {categories.map((category) => (
-                    <optgroup key={category.id} label={category.name}>
+                    <optgroup key={category.id} label={localizeDigits(category.name)}>
                       {category.items.map((item) => (
                         <option key={item.id} value={item.id}>
                           {item.group ? `${item.group} · ` : ""}
-                          {item.name}
+                          {localizeDigits(item.name)}
                         </option>
                       ))}
                     </optgroup>

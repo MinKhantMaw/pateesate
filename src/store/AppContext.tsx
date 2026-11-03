@@ -3,7 +3,7 @@ import { AppContext } from "./AppContextValue";
 import { defaultCategories, defaultSettings } from "../data/defaultCategories";
 import { defaultCombos } from "../data/defaultCombos";
 import { useLocalStorage } from "../hooks/useLocalStorage";
-import { dateKey } from "../utils/date";
+import { dateKey, setBurmeseNumerals } from "../utils/date";
 import {
   addArahanSiddhi,
   normalizeCategories,
@@ -103,6 +103,14 @@ function useAppStore() {
       value === 7,
   );
   const session = sessionData.singles;
+  setBurmeseNumerals(settings.burmeseNumerals);
+
+  useEffect(() => {
+    if (!settingsError) setSettings((previous) => {
+      const now = new Date().toISOString();
+      return { ...previous, lastOpenedAt: now, backupReminderDismissedAt: previous.backupReminderDismissedAt ?? previous.lastBackupAt ?? previous.lastOpenedAt ?? now };
+    });
+  }, [setSettings, settingsError]);
 
   useEffect(() => {
     if (
@@ -143,6 +151,7 @@ function useAppStore() {
       "dark",
       settings.theme === "dark",
     );
+    document.documentElement.classList.toggle("night", settings.theme === "night");
   }, [settings.theme]);
 
   function recordGoal(date: string, goalRounds: number, beadsPerRound: number) {

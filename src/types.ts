@@ -4,7 +4,7 @@ export interface Category { id: string; name: string; items: ChantItem[]; mode: 
 export interface Count { total: number; rounds: number }
 export type Counts = Record<string, Count>
 export type History = Record<string, Record<string, number>>
-export interface Settings { theme: 'light' | 'dark'; vibration: boolean; sound: boolean; defaultTarget: number; beadsPerRound: number; goalRounds: number; reminders: boolean; chantTextSize: number; beadStyle: 'gold' | 'jade' | 'wood'; glowEffect: boolean; lastReminderSlot?: string }
+export interface Settings { theme: 'light' | 'dark' | 'night'; vibration: boolean; sound: boolean; wakeLock: boolean; burmeseNumerals: boolean; pinnedItems: string[]; onboardingComplete: boolean; iosHintDismissed: boolean; lastBackupAt?: string; lastOpenedAt?: string; backupReminderDismissedAt?: string; lastCounterPath?: string; defaultTarget: number; beadsPerRound: number; goalRounds: number; reminders: boolean; chantTextSize: number; beadStyle: 'gold' | 'jade' | 'wood'; glowEffect: boolean; lastReminderSlot?: string }
 export interface CounterSession { count: number; target: number; roundsDone?: number; goalRounds?: number; goalReached?: boolean; undo: { date: string; completed: boolean; target: number; goalId?: string }[] }
 export type Sessions = Record<string, CounterSession>
 export type GroupRounds = Record<string, number>

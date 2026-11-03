@@ -1,7 +1,7 @@
 import { ArrowUpRight, Pencil, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { Category, Counts } from "../types";
-import { number } from "../utils/date";
+import { localizeDigits, number } from "../utils/date";
 
 export function CategoryCard({
   category,
@@ -29,12 +29,15 @@ export function CategoryCard({
       );
   }
   return (
-    <article className="category-card">
-      <div className="flex items-start justify-between gap-3">
-        <span className={`category-mark mark-${index % 4}`}>
-          {number(index + 1)}
-        </span>
-        <div className="flex gap-1">
+    <article className={`category-card card-tone-${index % 4}`}>
+      <div className="category-card-top">
+        <div className="category-card-identity">
+          <span className={`category-mark mark-${index % 4}`}>
+            {number(index + 1)}
+          </span>
+          <span className="category-card-label">အမျိုးအစား</span>
+        </div>
+        <div className="category-card-actions">
           <button
             className="icon-button"
             onClick={onEdit}
@@ -47,29 +50,32 @@ export function CategoryCard({
             className="icon-button"
             onClick={onDelete}
             aria-label={`${category.name} ဖျက်မည်`}
-            title="ဖျက်မည်"
+            title="ဖျက်၍ မရပါ"
+            disabled
           >
             <Trash2 size={17} />
           </button>
         </div>
       </div>
       <Link to={`/category/${category.id}`} className="category-link">
-        <h2 className="category-title">{category.name}</h2>
+        <h2 className="category-title">{localizeDigits(category.name)}</h2>
         <span className="category-arrow">
           <ArrowUpRight size={20} />
         </span>
       </Link>
       <div className="category-meta">
-        <span>{number(category.items.length)} မျိုး</span>
         <span>
-          စုစုပေါင်း <strong>{number(total)}</strong> ကြိမ်
+          စာသား <strong>{number(category.items.length)} <small>မျိုး</small></strong>
+        </span>
+        <span>
+          စုစုပေါင်း <strong>{number(total)} <small>ကြိမ်</small></strong>
         </span>
       </div>
       {groups.size > 0 && (
         <div className="category-groups">
           {Array.from(groups, ([group, count]) => (
             <div key={group}>
-              <span>{group}</span>
+              <span>{localizeDigits(group)}</span>
               <strong>{number(count)} ကြိမ်</strong>
             </div>
           ))}

@@ -40,5 +40,5 @@ export const defaultCategories: Category[] = [
   ] },
 ]
 
-export const defaultSettings: Settings = { theme: 'light', vibration: true, sound: false, defaultTarget: 108, beadsPerRound: 108, goalRounds: 9, reminders: false, chantTextSize: 20, beadStyle: 'gold', glowEffect: true }
+export const defaultSettings: Settings = { theme: 'light', vibration: true, sound: false, wakeLock: true, burmeseNumerals: true, pinnedItems: [], onboardingComplete: false, iosHintDismissed: false, defaultTarget: 108, beadsPerRound: 108, goalRounds: 9, reminders: false, chantTextSize: 20, beadStyle: 'gold', glowEffect: true }
 

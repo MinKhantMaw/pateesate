@@ -1,14 +1,41 @@
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Play, Plus, Star } from "lucide-react";
+import { Link } from "react-router-dom";
 import { CategoryCard } from "../components/CategoryCard";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { ComboManager } from "../components/ComboManager";
 import { useApp } from "../store/AppContextValue";
-import { number } from "../utils/date";
+import { localizeDigits, number } from "../utils/date";
+import { availableCategories } from "../utils/data";
 import type { Category, CounterMode } from "../types";
 
 export function Home() {
-  const { categories, setCategories, counts, clearCounterModes } = useApp();
+  const {
+    categories,
+    setCategories,
+    counts,
+    clearCounterModes,
+    settings,
+    setSettings,
+    combos,
+  } = useApp();
+  const catalog = availableCategories(categories);
+  const pinned = catalog.flatMap((category) =>
+    category.items
+      .filter((item) => settings.pinnedItems.includes(item.id))
+      .map((item) => ({ category, item })),
+  );
+  const resumePath = settings.lastCounterPath;
+  const resumeParts = resumePath?.split("/");
+  const canResume =
+    resumeParts?.[1] === "combo"
+      ? combos.some((combo) => combo.id === resumeParts[2])
+      : resumeParts?.[1] === "category" &&
+        catalog.some(
+          (category) =>
+            category.id === resumeParts[2] &&
+            category.items.some((item) => item.id === resumeParts[4]),
+        );
   const [editing, setEditing] = useState<Category | "new" | null>(null);
   const [name, setName] = useState("");
   const [mode, setMode] = useState<CounterMode>("sequence");
@@ -44,6 +71,7 @@ export function Home() {
   }
   return (
     <main className="page-wrap">
+      {/* {canResume ? <Link className="button-primary resume-button" to={resumePath!}><Play size={22} /> ဆက်စိပ်မည်</Link> : <button className="button-primary resume-button" disabled><Play size={22} /> ဆက်စိပ်မည်</button>} */}
       <div className="page-heading home-heading">
         <div>
           <div className="eyebrow">
@@ -59,6 +87,39 @@ export function Home() {
           </strong>
         </div>
       </div>
+      <section className="pinned-section" aria-label="အကြိုက်ဆုံးစာသားများ">
+        <h2>အကြိုက်ဆုံးများ</h2>
+        {pinned.length ? (
+          <div className="pinned-list">
+            {pinned.map(({ category, item }) => (
+              <div className="pinned-item" key={item.id}>
+                <Link to={`/category/${category.id}/item/${item.id}`}>
+                  {localizeDigits(item.name)}
+                </Link>
+                <button
+                  className="icon-button"
+                  title="အကြိုက်ဆုံးမှ ဖယ်မည်"
+                  aria-label={`${item.name} အကြိုက်ဆုံးမှ ဖယ်မည်`}
+                  onClick={() =>
+                    setSettings((previous) => ({
+                      ...previous,
+                      pinnedItems: previous.pinnedItems.filter(
+                        (id) => id !== item.id,
+                      ),
+                    }))
+                  }
+                >
+                  <Star size={18} fill="currentColor" />
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="pinned-empty">
+            <Star size={18} aria-hidden="true" /> အကြိုက်ဆုံးစာသား မရှိသေးပါ။
+          </p>
+        )}
+      </section>
       <div className="section-heading">
         <div>
           <span className="section-kicker">စိပ်ရန်ရွေးချယ်ပါ</span>
