@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react'
 
-export function useLocalStorage<T>(key: string, initialValue: T, isValid?: (value: unknown) => boolean) {
+export function useLocalStorage<T>(key: string, initialValue: T, isValid?: (value: unknown) => boolean, normalize?: (value: unknown) => T) {
   const [initial] = useState(() => {
     if (typeof window === 'undefined') return { value: initialValue, error: false, missing: false }
     try {
@@ -8,7 +8,7 @@ export function useLocalStorage<T>(key: string, initialValue: T, isValid?: (valu
       if (saved === null) return { value: initialValue, error: false, missing: true }
       const parsed: unknown = JSON.parse(saved)
       if (isValid && !isValid(parsed)) throw new Error('Invalid stored data')
-      return { value: parsed as T, error: false, missing: false }
+      return { value: normalize ? normalize(parsed) : parsed as T, error: false, missing: false }
     } catch {
       return { value: initialValue, error: true, missing: false }
     }
