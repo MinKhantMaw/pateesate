@@ -106,6 +106,19 @@ small, .home-total small { font-size: 12px; font-weight: 500; }
 .bead-orbit:before, .bead-orbit:after { content: ''; position: absolute; width: 9px; height: 9px; border-radius: 50%; background: #c6a567; top: -5px; left: calc(50% - 5px); }.bead-orbit:after { top: auto; bottom: -5px; }
 .bead-button { width: 80%; aspect-ratio: 1; position: relative; display: grid; place-items: center; overflow: hidden; border-radius: 50%; color: #fff; background: radial-gradient(circle at 35% 25%, #a96258, #833d3e 65%, #633030); box-shadow: 0 15px 25px #622e3030, inset 0 1px 5px #ffffff55; touch-action: manipulation; transition: transform .12s; }
 .bead-button:active { transform: scale(.96); }.bead-inner { position: relative; display: flex; align-items: center; flex-direction: column; line-height: 1.4; }.bead-small { color: #f1d9cb; font-size: 13px; }.bead-count { font-size: 60px; line-height: 1.4; }.bead-target { font-size: 14px; color: #f4ded1; }.bead-hint { margin-top: 12px; font-size: 13px; color: #f4ded1; }.bead-ripple { position: absolute; inset: 0; border-radius: 50%; background: #fff; animation: ripple .55s ease-out both; }
+.round-ring { position: absolute; inset: 6px; border-radius: 50%; mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px)); }
+.round-settings { display: grid; gap: 16px; width: 100%; padding: 18px 0; }
+.round-summary { text-align: center; font-weight: 700; color: var(--green); margin: 0 0 16px; }
+.goal-backdrop { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; overflow-y: auto; padding: 24px; background: #17241eea; color: #fff; text-align: center; }
+.goal-content { width: min(460px, 100%); }
+.goal-content h2 { font-size: 28px; line-height: 1.5; margin: 20px 0 8px; }
+.goal-content p { line-height: 1.7; }
+.goal-sparkle { color: #e8bd6a; filter: drop-shadow(0 0 18px #e8bd6a); animation: goal-glow 3s ease-in-out infinite alternate; }
+.goal-closing { color: #f1d39a; margin: 22px 0; font-size: 20px; }
+.goal-actions { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; }
+.goal-actions .button-outline { color: #fff; border-color: #ffffff80; }
+@keyframes goal-glow { from { opacity: .7; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .goal-sparkle { animation: none; } }
 @keyframes ripple { from { opacity: .25; transform: scale(.2); } to { opacity: 0; transform: scale(1.3); } }
 .round-message { min-height: 36px; text-align: center; color: var(--green); font-weight: 700; font-size: 14px; margin-top: 10px; }
 .counter-summary { display: grid; grid-template-columns: 1fr 1fr; max-width: 400px; margin: 0 auto; text-align: center; }.counter-summary > div + div { border-left: 1px solid var(--line); }.counter-summary span, .counter-summary strong { display: block; }.counter-summary span { color: var(--muted); font-size: 13px; }.counter-summary strong { font-size: 23px; }.counter-summary small { color: var(--muted); }

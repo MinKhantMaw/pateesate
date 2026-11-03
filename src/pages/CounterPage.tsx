@@ -9,7 +9,9 @@ import {
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { CounterButton } from "../components/CounterButton";
-import { counterFeedback, useCounter } from "../hooks/useCounter";
+import { GoalDialog } from "../components/GoalDialog";
+import { RoundSettings } from "../components/RoundSettings";
+import { counterFeedback, milestoneFeedback, useCounter } from "../hooks/useCounter";
 import { useWakeLock } from "../hooks/useWakeLock";
 import { useApp } from "../store/AppContextValue";
 import { availableCategories, sequenceKey } from "../utils/data";
@@ -102,7 +104,9 @@ export function ComboCounterPage() {
         currentIndex: 0,
         sessionTaps: 0,
         passes: 0,
-        target: 3,
+        target: store.settings.goalRounds,
+        beadsPerRound: store.settings.beadsPerRound,
+        goalRounds: store.settings.goalRounds,
         undo: [],
       }),
       currentIndex: nextIndex,
@@ -178,30 +182,27 @@ function CounterScreen({
   onModeChange: (mode: CounterMode) => void;
 }) {
   const counter = useCounter(item.id);
+  const store = useApp();
+  const navigate = useNavigate();
+  const goalRounds = counter.session.goalRounds ?? store.settings.goalRounds;
+  const roundsDone = counter.session.roundsDone ?? 0;
   const [completed, setCompleted] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
-  const [pendingTarget, setPendingTarget] = useState<number | null>(null);
-  const [customTarget, setCustomTarget] = useState("");
+  const [pendingTarget, setPendingTarget] = useState<{ beads: number; goal: number } | null>(null);
   useEffect(() => {
     if (completed) {
-      const timer = window.setTimeout(() => setCompleted(false), 3500);
+      const timer = window.setTimeout(() => setCompleted(false), 2000);
       return () => window.clearTimeout(timer);
     }
   }, [completed, counter.count.rounds]);
   const itemIndex = category.items.findIndex((entry) => entry.id === item.id);
   const previous = category.items[itemIndex - 1];
   const next = category.items[itemIndex + 1];
-  function changeTarget(target: number) {
-    if (
-      !Number.isSafeInteger(target) ||
-      target < 1 ||
-      target > 1000000 ||
-      target === counter.session.target
-    )
-      return;
+  function changeTarget(beads: number, goal: number) {
+    if (beads === counter.session.target && goal === goalRounds) return;
     if (counter.session.count || counter.session.undo.length)
-      setPendingTarget(target);
-    else counter.reset(target);
+      setPendingTarget({ beads, goal });
+    else counter.reset(beads, goal);
   }
   return (
     <main className="counter-page">
@@ -228,14 +229,19 @@ function CounterScreen({
             count={counter.session.count}
             target={counter.session.target}
             onClick={() => {
-              if (counter.tap()) setCompleted(true);
+              if (counter.tap()) {
+                const goal = (roundsDone + 1) % goalRounds === 0;
+                milestoneFeedback(store.settings.vibration, store.settings.sound, goal);
+                setCompleted(true);
+              }
             }}
           />
         </div>
       </div>
       <div className="round-message" aria-live="polite">
-        {completed ? "တစ်ပတ်ပြည့်ပါပြီ" : "\u00a0"}
+        {completed ? "၁ ပတ်ပြည့်ပါပြီ" : "\u00a0"}
       </div>
+      <p className="round-summary">ပြီးသောပတ်: {number(roundsDone)} / {number(goalRounds)}</p>
       <div className="counter-summary">
         <div>
           <span>စုစုပေါင်း</span>
@@ -299,56 +305,7 @@ function CounterScreen({
         )}
       </nav>
       <div className="counter-settings">
-        <div>
-          <label className="field-label" htmlFor="target-select">
-            တစ်ပတ်လျှင် အကြိမ်ရေ
-          </label>
-          <select
-            id="target-select"
-            className="text-input"
-            value={
-              [9, 27, 54, 108].includes(counter.session.target)
-                ? counter.session.target
-                : "custom"
-            }
-            onChange={(event) => {
-              if (event.target.value === "custom") {
-                setCustomTarget(String(counter.session.target));
-                return;
-              }
-              changeTarget(Number(event.target.value));
-            }}
-          >
-            <option value="9">၉ ကြိမ်</option>
-            <option value="27">၂၇ ကြိမ်</option>
-            <option value="54">၅၄ ကြိမ်</option>
-            <option value="108">၁၀၈ ကြိမ်</option>
-            <option value="custom">ကိုယ်တိုင်သတ်မှတ်မည်</option>
-          </select>
-          {(customTarget !== "" ||
-            ![9, 27, 54, 108].includes(counter.session.target)) && (
-            <div className="custom-target">
-              <input
-                aria-label="ကိုယ်တိုင်သတ်မှတ်မည့် အကြိမ်ရေ"
-                className="text-input"
-                type="number"
-                min="1"
-                max="1000000"
-                value={customTarget || counter.session.target}
-                onChange={(event) => setCustomTarget(event.target.value)}
-              />
-              <button
-                className="button-outline"
-                onClick={() => {
-                  changeTarget(Number(customTarget));
-                  setCustomTarget("");
-                }}
-              >
-                သတ်မှတ်မည်
-              </button>
-            </div>
-          )}
-        </div>
+        <RoundSettings key={`${counter.session.target}:${goalRounds}`} beadsPerRound={counter.session.target} goalRounds={goalRounds} onChange={changeTarget} />
         <label className="wake-row">
           <span>
             မျက်နှာပြင်ဖွင့်ထားမည်
@@ -385,7 +342,7 @@ function CounterScreen({
           title="အကြိမ်ရေ ပြောင်းမည်လား"
           onClose={() => setPendingTarget(null)}
           onConfirm={() => {
-            counter.reset(pendingTarget);
+            counter.reset(pendingTarget.beads, pendingTarget.goal);
             setCompleted(false);
             setPendingTarget(null);
           }}
@@ -397,6 +354,7 @@ function CounterScreen({
           </p>
         </ConfirmDialog>
       )}
+      {counter.session.goalReached && <GoalDialog rounds={roundsDone} beadsPerRound={counter.session.target} onContinue={counter.dismissGoal} onReset={() => counter.reset()} onDone={() => { counter.dismissGoal(); navigate(comboName ? "/" : `/category/${category.id}`); }} />}
     </main>
   );
 }
@@ -442,7 +400,9 @@ function SequenceScreen({
     repeatIndex: 0,
     sessionTaps: 0,
     passes: 0,
-    target: 3,
+    target: store.settings.goalRounds,
+    beadsPerRound: store.settings.beadsPerRound,
+    goalRounds: store.settings.goalRounds,
     undo: [],
   };
   const sequence = saved
@@ -457,6 +417,8 @@ function SequenceScreen({
     : initial;
   const current = items[sequence.currentIndex];
   const next = items[(sequence.currentIndex + 1) % items.length];
+  const beadsPerRound = sequence.beadsPerRound ?? store.settings.beadsPerRound;
+  const goalRounds = sequence.goalRounds ?? store.settings.goalRounds;
   const section =
     combo?.id === defaultCombos[0].id
       ? current.id.startsWith("combo-saranagon-")
@@ -469,11 +431,10 @@ function SequenceScreen({
       : "";
   const [completed, setCompleted] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
-  const [pendingTarget, setPendingTarget] = useState<number | null>(null);
-  const [target, setTarget] = useState(String(sequence.target));
+  const [pendingTarget, setPendingTarget] = useState<{ beads: number; goal: number } | null>(null);
   useEffect(() => {
     if (completed) {
-      const timer = window.setTimeout(() => setCompleted(false), 3500);
+      const timer = window.setTimeout(() => setCompleted(false), 2000);
       return () => window.clearTimeout(timer);
     }
   }, [completed, rounds]);
@@ -481,7 +442,7 @@ function SequenceScreen({
     store.saveSequence({ ...sequence, currentIndex: index, repeatIndex: 0 });
     setCompleted(false);
   }
-  function reset(newTarget = sequence.target) {
+  function reset(beads = beadsPerRound, goal = goalRounds) {
     store.saveSequence({
       ...sequence,
       currentIndex: 0,
@@ -489,21 +450,15 @@ function SequenceScreen({
       sessionTaps: 0,
       passes: 0,
       progress: 0,
-      target: newTarget,
+      target: goal, beadsPerRound: beads, goalRounds: goal, goalReached: false,
       undo: [],
     });
     setCompleted(false);
   }
-  function changeTarget(value: number) {
-    if (!Number.isSafeInteger(value) || value < 1 || value > 1000000) {
-      setTarget(String(sequence.target));
-      return;
-    }
-    setTarget(String(value));
-    if (value !== sequence.target) {
-      if (sequence.sessionTaps || sequence.undo.length) setPendingTarget(value);
-      else reset(value);
-    }
+  function changeTarget(beads: number, goal: number) {
+    if (beads === beadsPerRound && goal === goalRounds) return;
+    if (sequence.sessionTaps || sequence.undo.length) setPendingTarget({ beads, goal });
+    else reset(beads, goal);
   }
   function switchMode(mode: CounterMode) {
     if (mode === "single" && !combo)
@@ -568,19 +523,23 @@ function SequenceScreen({
       <div className="counter-stage">
         <div className="bead-orbit">
           <CounterButton
-            passes
-            count={sequence.passes}
-            target={sequence.target}
+            count={sequence.sessionTaps % beadsPerRound}
+            target={beadsPerRound}
             onClick={() => {
               counterFeedback(store.settings.vibration, store.settings.sound);
-              if (store.incrementSequence(sequence, steps)) setCompleted(true);
+              if (store.incrementSequence(sequence, steps)) {
+                const goal = (sequence.passes + 1) % goalRounds === 0;
+                milestoneFeedback(store.settings.vibration, store.settings.sound, goal);
+                setCompleted(true);
+              }
             }}
           />
         </div>
       </div>
       <div className="round-message" aria-live="polite">
-        {completed ? "တစ်ပတ်ပြည့်ပါပြီ" : "\u00a0"}
+        {completed ? "၁ ပတ်ပြည့်ပါပြီ" : "\u00a0"}
       </div>
+      <p className="round-summary">ပြီးသောပတ်: {number(sequence.passes)} / {number(goalRounds)}</p>
       <div className="counter-summary sequence-summary">
         <div>
           <span>ယခုစာသား</span>
@@ -655,44 +614,7 @@ function SequenceScreen({
         </div>
       </details>
       <div className="counter-settings">
-        <div>
-          <label className="field-label" htmlFor="sequence-target">
-            ရည်မှန်းချက် (ပတ်ရေ)
-          </label>
-          <div
-            className="target-presets"
-            role="group"
-            aria-label="ရည်မှန်းချက်ပတ်ရေ"
-          >
-            {[1, 3, 7, 9].map((value) => (
-              <button
-                key={value}
-                type="button"
-                aria-pressed={sequence.target === value}
-                onClick={() => changeTarget(value)}
-              >
-                {number(value)}
-              </button>
-            ))}
-          </div>
-          <div className="custom-target">
-            <input
-              id="sequence-target"
-              className="text-input"
-              type="number"
-              min="1"
-              max="1000000"
-              value={target}
-              onChange={(event) => setTarget(event.target.value)}
-            />
-            <button
-              className="button-outline"
-              onClick={() => changeTarget(Number(target))}
-            >
-              သတ်မှတ်မည်
-            </button>
-          </div>
-        </div>
+        <RoundSettings key={`${beadsPerRound}:${goalRounds}`} beadsPerRound={beadsPerRound} goalRounds={goalRounds} onChange={changeTarget} />
         <label className="wake-row">
           <span>
             မျက်နှာပြင်ဖွင့်ထားမည်
@@ -727,12 +649,9 @@ function SequenceScreen({
       {pendingTarget !== null && (
         <ConfirmDialog
           title="ပတ်ရေ ပြောင်းမည်လား"
-          onClose={() => {
-            setTarget(String(sequence.target));
-            setPendingTarget(null);
-          }}
+          onClose={() => setPendingTarget(null)}
           onConfirm={() => {
-            reset(pendingTarget);
+            reset(pendingTarget.beads, pendingTarget.goal);
             setPendingTarget(null);
           }}
           confirmLabel="ပြောင်းမည်"
@@ -743,6 +662,7 @@ function SequenceScreen({
           </p>
         </ConfirmDialog>
       )}
+      {sequence.goalReached && <GoalDialog rounds={sequence.passes} beadsPerRound={beadsPerRound} onContinue={() => store.saveSequence({ ...sequence, goalReached: false })} onReset={() => reset()} onDone={() => { store.saveSequence({ ...sequence, goalReached: false }); navigate(combo ? "/" : `/category/${category.id}`); }} />}
     </main>
   );
 }

@@ -7,6 +7,7 @@ import { dateKey } from "../utils/date";
 import {
   normalizeCategories,
   normalizeData,
+  normalizeSettings,
   normalizeSession,
   sequenceKey,
   upgradeLegacyCombos,
@@ -20,6 +21,7 @@ import type {
   CounterMode,
   Counts,
   GroupRounds,
+  GoalHistory,
   History,
   SequenceSession,
   SessionData,
@@ -66,6 +68,7 @@ function useAppStore() {
     "pawtiza:settings",
     defaultSettings,
     validatePart("settings"),
+    (value) => normalizeSettings(value as Settings),
   );
   const [sessionData, setSessionData, sessionError] =
     useLocalStorage<SessionData>(
@@ -80,17 +83,20 @@ function useAppStore() {
       {},
       validatePart("groupRounds"),
     );
+  const [goalHistory, setGoalHistory, goalHistoryError] = useLocalStorage<GoalHistory>(
+    "pawtiza:goalHistory", {}, validatePart("goalHistory"),
+  );
   const [version, setVersion, versionError] = useLocalStorage<number>(
     "pawtiza:version",
     1,
     (value) =>
-      value === 1 || value === 2 || value === 3 || value === 4 || value === 5,
+      value === 1 || value === 2 || value === 3 || value === 4 || value === 5 || value === 6,
   );
   const session = sessionData.singles;
 
   useEffect(() => {
     if (
-      version >= 5 ||
+      version >= 6 ||
       versionError ||
       categoriesError ||
       sessionError ||
@@ -105,9 +111,10 @@ function useAppStore() {
         ? [...previous, combo]
         : previous,
     );
-    setCombos((previous) => upgradeLegacyCombos(previous));
+    if (version < 5) setCombos((previous) => upgradeLegacyCombos(previous));
+    setSettings((previous) => normalizeSettings(previous));
     setSessionData((previous) => previous);
-    setVersion(5);
+    setVersion(6);
   }, [
     version,
     versionError,
@@ -117,6 +124,7 @@ function useAppStore() {
     setCategories,
     setCombos,
     setSessionData,
+    setSettings,
     setVersion,
   ]);
 
@@ -127,22 +135,40 @@ function useAppStore() {
     );
   }, [settings.theme]);
 
+  function recordGoal(date: string, goalRounds: number, beadsPerRound: number) {
+    const id = crypto.randomUUID();
+    setGoalHistory((previous) => ({ ...previous, [date]: [...(previous[date] ?? []), { id, goalRounds, beadsPerRound }] }));
+    return id;
+  }
+  function removeGoal(date: string, id?: string) {
+    if (id) setGoalHistory((previous) => ({ ...previous, [date]: (previous[date] ?? []).filter((entry) => entry.id !== id) }));
+  }
+
   function increment(id: string) {
     const current = session[id] ?? {
       count: 0,
-      target: settings.defaultTarget,
+      target: settings.beadsPerRound,
+      roundsDone: 0,
+      goalRounds: settings.goalRounds,
+      goalReached: false,
       undo: [],
     };
     const date = dateKey();
     const completed = current.count + 1 >= current.target;
+    const roundsDone = (current.roundsDone ?? 0) + (completed ? 1 : 0);
+    const goalRounds = current.goalRounds ?? settings.goalRounds;
+    const goalId = completed && roundsDone % goalRounds === 0 ? recordGoal(date, goalRounds, current.target) : undefined;
     setSessionData((previous) => ({
       ...previous,
+      sourceType: "single", sourceId: id, stepIndex: 0, repeatIndex: 0,
+      tapsInRound: completed ? 0 : current.count + 1, roundsDone, goalReached: !!goalId,
       singles: {
         ...previous.singles,
         [id]: {
           ...current,
           count: completed ? 0 : current.count + 1,
-          undo: [...current.undo, { date, completed, target: current.target }],
+          roundsDone, goalRounds, goalReached: !!goalId,
+          undo: [...current.undo, { date, completed, target: current.target, goalId }],
         },
       },
     }));
@@ -164,16 +190,18 @@ function useAppStore() {
     const current = session[id];
     const last = current?.undo.at(-1);
     if (!current || !last) return;
+    const roundsDone = Math.max(0, (current.roundsDone ?? 0) - (last.completed ? 1 : 0));
+    const count = last.completed ? last.target - 1 : Math.max(0, current.count - 1);
+    removeGoal(last.date, last.goalId);
     setSessionData((previous) => ({
       ...previous,
+      sourceType: "single", sourceId: id, tapsInRound: count, roundsDone, goalReached: false,
       singles: {
         ...previous.singles,
         [id]: {
           ...current,
           target: last.target,
-          count: last.completed
-            ? last.target - 1
-            : Math.max(0, current.count - 1),
+          count, roundsDone, goalReached: false,
           undo: current.undo.slice(0, -1),
         },
       },
@@ -197,19 +225,24 @@ function useAppStore() {
     }));
   }
 
-  function resetSession(id: string, target?: number) {
+  function resetSession(id: string, target?: number, goalRounds?: number) {
     setSessionData((previous) => ({
       ...previous,
+      sourceType: "single", sourceId: id, stepIndex: 0, repeatIndex: 0, tapsInRound: 0, roundsDone: 0, goalReached: false,
       singles: {
         ...previous.singles,
         [id]: {
           count: 0,
           target:
-            target ?? previous.singles[id]?.target ?? settings.defaultTarget,
+            target ?? previous.singles[id]?.target ?? settings.beadsPerRound,
+          roundsDone: 0, goalRounds: goalRounds ?? previous.singles[id]?.goalRounds ?? settings.goalRounds, goalReached: false,
           undo: [],
         },
       },
     }));
+  }
+  function dismissSingleGoal(id: string) {
+    setSessionData((previous) => ({ ...previous, goalReached: false, singles: { ...previous.singles, [id]: { ...previous.singles[id], goalReached: false } } }));
   }
   function saveSequence(sequence: SequenceSession) {
     const key =
@@ -228,6 +261,9 @@ function useAppStore() {
       stepIndex: sequence.currentIndex,
       repeatIndex: sequence.repeatIndex ?? 0,
       passesDone: sequence.passes,
+      tapsInRound: sequence.sessionTaps % (sequence.beadsPerRound ?? settings.beadsPerRound),
+      roundsDone: sequence.passes,
+      goalReached: sequence.goalReached ?? false,
       sequences: { ...previous.sequences, [key]: sequence },
     }));
   }
@@ -273,8 +309,11 @@ function useAppStore() {
         : current.currentIndex === progressBefore
           ? progressBefore + 1
           : 0;
-    const completed = stepCompleted && progress === steps.length;
-    const reachedTarget = completed && current.passes + 1 >= current.target;
+    const beadsPerRound = current.beadsPerRound ?? settings.beadsPerRound;
+    const goalRounds = current.goalRounds ?? settings.goalRounds;
+    const completed = (current.sessionTaps + 1) % beadsPerRound === 0;
+    const roundsDone = current.passes + (completed ? 1 : 0);
+    const goalId = completed && roundsDone % goalRounds === 0 ? recordGoal(date, goalRounds, beadsPerRound) : undefined;
     saveSequence({
       ...current,
       currentIndex: stepCompleted
@@ -282,12 +321,8 @@ function useAppStore() {
         : current.currentIndex,
       repeatIndex: stepCompleted ? 0 : repeatBefore + 1,
       progress: completed ? 0 : progress,
-      sessionTaps: reachedTarget ? 0 : current.sessionTaps + 1,
-      passes: completed
-        ? reachedTarget
-          ? 0
-          : current.passes + 1
-        : current.passes,
+      sessionTaps: current.sessionTaps + 1,
+      passes: roundsDone, beadsPerRound, goalRounds, goalReached: !!goalId,
       undo: [
         ...current.undo,
         {
@@ -299,6 +334,7 @@ function useAppStore() {
           passesBefore: current.passes,
           progressBefore,
           repeatBefore,
+          goalId,
         },
       ],
     });
@@ -329,6 +365,7 @@ function useAppStore() {
   function undoSequence(current: SequenceSession) {
     const last = current.undo.at(-1);
     if (!last) return;
+    removeGoal(last.date, last.goalId);
     saveSequence({
       ...current,
       currentIndex: last.previousIndex,
@@ -336,6 +373,7 @@ function useAppStore() {
       progress: last.progressBefore ?? 0,
       sessionTaps: last.sessionTapsBefore,
       passes: last.passesBefore,
+      goalReached: false,
       undo: current.undo.slice(0, -1),
     });
     setCounts((previous) => ({
@@ -377,6 +415,7 @@ function useAppStore() {
     setSettings(normalized.settings);
     setSessionData(normalized.session);
     setGroupRounds(normalized.groupRounds);
+    setGoalHistory(normalized.goalHistory ?? {});
   }
   return {
     categories,
@@ -391,9 +430,11 @@ function useAppStore() {
     session,
     sessionData,
     groupRounds,
+    goalHistory,
     increment,
     undo,
     resetSession,
+    dismissSingleGoal,
     saveSequence,
     setCounterMode,
     clearCounterModes,
@@ -408,6 +449,7 @@ function useAppStore() {
       settingsError ||
       sessionError ||
       groupRoundsError ||
+      goalHistoryError ||
       versionError,
   };
 }

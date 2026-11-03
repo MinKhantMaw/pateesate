@@ -11,7 +11,7 @@ import { availableCategories, sequenceKey } from "../utils/data";
 import { dateKey, number, shiftDay } from "../utils/date";
 
 export function StatsPage() {
-  const { categories, combos, counts, history, groupRounds } = useApp();
+  const { categories, combos, counts, history, groupRounds, goalHistory } = useApp();
   const [today, setToday] = useState(() => new Date());
   useEffect(() => {
     const timer = window.setInterval(() => setToday(new Date()), 60000);
@@ -101,6 +101,13 @@ export function StatsPage() {
           </div>
         ))}
       </div>
+      <section className="content-section">
+        <div className="section-heading"><div><span className="section-kicker">ရည်မှန်းချက်</span><h2>ပြည့်ခဲ့သော အစီအစဉ်များ</h2></div><strong>{number(Object.values(goalHistory).reduce((total, entries) => total + entries.length, 0))} ကြိမ်</strong></div>
+        <div className="history-list">
+          {Object.entries(goalHistory).sort(([first], [second]) => second.localeCompare(first)).flatMap(([date, entries]) => Object.entries(entries.reduce<Record<number, number>>((totals, entry) => ({ ...totals, [entry.goalRounds]: (totals[entry.goalRounds] ?? 0) + 1 }), {})).map(([goal, count]) => <div className="history-row" key={`${date}:${goal}`}><span>{number(Number(goal))} ပတ်ပြည့်သည့်ရက်: {number(Number(date.slice(8, 10)))} / {number(Number(date.slice(5, 7)))} / {number(Number(date.slice(0, 4)))}</span><strong>{number(count)} ကြိမ်</strong></div>))}
+          {!Object.values(goalHistory).some(entries => entries.length) && <div className="empty-state">မှတ်တမ်း မရှိသေးပါ။</div>}
+        </div>
+      </section>
       <section className="content-section">
         <div className="section-heading">
           <div>

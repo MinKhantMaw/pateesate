@@ -1,13 +1,13 @@
-import { defaultCategories } from '../data/defaultCategories'
+import { defaultCategories, defaultSettings } from '../data/defaultCategories'
 import { defaultCombos } from '../data/defaultCombos'
-import type { AppData, Category, Combo, SessionData, Sessions } from '../types'
+import type { AppData, Category, Combo, SessionData, Sessions, Settings } from '../types'
 
 const object = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value)
 const integer = (value: unknown) => Number.isSafeInteger(value) && (value as number) >= 0
 const target = (value: unknown) => integer(value) && (value as number) > 0 && (value as number) <= 1000000
 export const sequenceKey = (categoryId: string, group?: string) => `${categoryId}:${group ?? ''}`
-const singleSession = (session: unknown) => object(session) && integer(session.count) && target(session.target) && (session.count as number) < (session.target as number) && Array.isArray(session.undo) && session.undo.every(entry => object(entry) && typeof entry.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(entry.date) && typeof entry.completed === 'boolean' && target(entry.target))
-const sequenceSession = (session: unknown) => object(session) && typeof session.categoryId === 'string' && (session.group === undefined || typeof session.group === 'string') && (session.sourceType === undefined || ['category', 'group', 'combo'].includes(session.sourceType as string)) && (session.sourceId === undefined || typeof session.sourceId === 'string') && (session.sourceType !== 'combo' || (typeof session.sourceId === 'string' && !!session.sourceId)) && typeof session.entryItemId === 'string' && integer(session.currentIndex) && (session.repeatIndex === undefined || integer(session.repeatIndex)) && integer(session.sessionTaps) && integer(session.passes) && target(session.target) && (session.passes as number) < (session.target as number) && (session.progress === undefined || integer(session.progress)) && Array.isArray(session.undo) && session.undo.every(entry => object(entry) && typeof entry.itemId === 'string' && typeof entry.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(entry.date) && integer(entry.previousIndex) && typeof entry.completed === 'boolean' && integer(entry.sessionTapsBefore) && integer(entry.passesBefore) && (entry.progressBefore === undefined || integer(entry.progressBefore)) && (entry.repeatBefore === undefined || integer(entry.repeatBefore)))
+const singleSession = (session: unknown) => object(session) && integer(session.count) && target(session.target) && (session.count as number) < (session.target as number) && (session.roundsDone === undefined || integer(session.roundsDone)) && (session.goalRounds === undefined || target(session.goalRounds)) && (session.goalReached === undefined || typeof session.goalReached === 'boolean') && Array.isArray(session.undo) && session.undo.every(entry => object(entry) && typeof entry.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(entry.date) && typeof entry.completed === 'boolean' && target(entry.target) && (entry.goalId === undefined || typeof entry.goalId === 'string'))
+const sequenceSession = (session: unknown) => object(session) && typeof session.categoryId === 'string' && (session.group === undefined || typeof session.group === 'string') && (session.sourceType === undefined || ['category', 'group', 'combo'].includes(session.sourceType as string)) && (session.sourceId === undefined || typeof session.sourceId === 'string') && (session.sourceType !== 'combo' || (typeof session.sourceId === 'string' && !!session.sourceId)) && typeof session.entryItemId === 'string' && integer(session.currentIndex) && (session.repeatIndex === undefined || integer(session.repeatIndex)) && integer(session.sessionTaps) && integer(session.passes) && target(session.target) && (session.beadsPerRound === undefined || target(session.beadsPerRound)) && (session.goalRounds === undefined || target(session.goalRounds)) && (session.goalReached === undefined || typeof session.goalReached === 'boolean') && (session.progress === undefined || integer(session.progress)) && Array.isArray(session.undo) && session.undo.every(entry => object(entry) && typeof entry.itemId === 'string' && typeof entry.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(entry.date) && integer(entry.previousIndex) && typeof entry.completed === 'boolean' && integer(entry.sessionTapsBefore) && integer(entry.passesBefore) && (entry.progressBefore === undefined || integer(entry.progressBefore)) && (entry.repeatBefore === undefined || integer(entry.repeatBefore)) && (entry.goalId === undefined || typeof entry.goalId === 'string'))
 
 export function normalizeCategories(categories: Category[]): Category[] {
   return categories.map(category => ({ ...category, items: category.id === 'combo' ? category.items.map(item => ({ ...item, group: undefined })) : category.items, mode: category.mode ?? defaultCategories.find(entry => entry.id === category.id)?.mode ?? 'single' }))
@@ -29,12 +29,14 @@ export function upgradeLegacyCombos(combos: Combo[]): Combo[] {
 }
 
 export function normalizeSession(value: unknown): SessionData {
-  if (object(value) && object(value.singles) && object(value.sequences)) return value as unknown as SessionData
-  return { singles: value as Sessions, sequences: {} }
+  const session = object(value) && object(value.singles) && object(value.sequences) ? value as unknown as SessionData : { singles: value as Sessions, sequences: {} }
+  return { ...session, singles: Object.fromEntries(Object.entries(session.singles).map(([id, single]) => [id, { ...single, roundsDone: single.roundsDone ?? single.undo.filter(entry => entry.completed).length, goalRounds: single.goalRounds ?? 9, goalReached: single.goalReached ?? false }])), sequences: Object.fromEntries(Object.entries(session.sequences).map(([id, sequence]) => { const beadsPerRound = sequence.beadsPerRound ?? 108; return [id, { ...sequence, beadsPerRound, goalRounds: sequence.goalRounds ?? 9, goalReached: sequence.goalReached ?? false, passes: sequence.beadsPerRound === undefined ? Math.floor(sequence.sessionTaps / beadsPerRound) : sequence.passes, undo: sequence.beadsPerRound === undefined ? sequence.undo.map(entry => ({ ...entry, completed: (entry.sessionTapsBefore + 1) % beadsPerRound === 0, passesBefore: Math.floor(entry.sessionTapsBefore / beadsPerRound) })) : sequence.undo }] })) }
 }
 
+export function normalizeSettings(value: Settings): Settings { return { ...defaultSettings, ...value, beadsPerRound: value.beadsPerRound ?? value.defaultTarget ?? 108, goalRounds: value.goalRounds ?? 9 } }
+
 export function normalizeData(data: AppData): AppData {
-  return { ...data, categories: normalizeCategories(data.categories), combos: data.combos ?? defaultCombos, session: normalizeSession(data.session), groupRounds: data.groupRounds ?? {} }
+  return { ...data, categories: normalizeCategories(data.categories), combos: data.combos ?? defaultCombos, settings: normalizeSettings(data.settings), session: normalizeSession(data.session), groupRounds: data.groupRounds ?? {}, goalHistory: data.goalHistory ?? {} }
 }
 
 export function validData(value: unknown): value is AppData {
@@ -60,15 +62,16 @@ export function validData(value: unknown): value is AppData {
   if (!Object.values(value.counts).every(count => object(count) && integer(count.total) && integer(count.rounds))) return false
   if (!Object.entries(value.history).every(([day, entries]) => /^\d{4}-\d{2}-\d{2}$/.test(day) && object(entries) && Object.values(entries).every(integer))) return false
   const settings = value.settings
-  if (!['light', 'dark'].includes(settings.theme as string) || typeof settings.vibration !== 'boolean' || typeof settings.sound !== 'boolean' || !target(settings.defaultTarget)) return false
+  if (!['light', 'dark'].includes(settings.theme as string) || typeof settings.vibration !== 'boolean' || typeof settings.sound !== 'boolean' || !target(settings.defaultTarget) || (settings.beadsPerRound !== undefined && !target(settings.beadsPerRound)) || (settings.goalRounds !== undefined && !target(settings.goalRounds))) return false
   if (value.groupRounds !== undefined && (!object(value.groupRounds) || !Object.values(value.groupRounds).every(integer))) return false
+  if (value.goalHistory !== undefined && (!object(value.goalHistory) || !Object.entries(value.goalHistory).every(([day, entries]) => /^\d{4}-\d{2}-\d{2}$/.test(day) && Array.isArray(entries) && entries.every(entry => object(entry) && typeof entry.id === 'string' && target(entry.goalRounds) && target(entry.beadsPerRound))))) return false
   const session = value.session
   if ('singles' in session || 'sequences' in session) return object(session.singles) && object(session.sequences) && Object.values(session.singles).every(singleSession) && Object.values(session.sequences).every(sequenceSession) && (session.modes === undefined || (object(session.modes) && Object.values(session.modes).every(mode => mode === 'single' || mode === 'sequence'))) && (session.categoryId === undefined || typeof session.categoryId === 'string') && (session.group === undefined || typeof session.group === 'string') && (session.currentIndex === undefined || integer(session.currentIndex)) && (session.sessionTaps === undefined || integer(session.sessionTaps))
   return Object.values(session).every(singleSession)
 }
 
 export function downloadData(data: AppData) {
-  const blob = new Blob([JSON.stringify({ version: 4, ...data }, null, 2)], { type: 'application/json' })
+  const blob = new Blob([JSON.stringify({ version: 5, ...data }, null, 2)], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
   const anchor = document.createElement('a')
   anchor.href = url

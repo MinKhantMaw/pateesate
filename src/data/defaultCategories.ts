@@ -37,5 +37,5 @@ export const defaultCategories: Category[] = [
   ] },
 ]
 
-export const defaultSettings: Settings = { theme: 'light', vibration: true, sound: false, defaultTarget: 108 }
+export const defaultSettings: Settings = { theme: 'light', vibration: true, sound: false, defaultTarget: 108, beadsPerRound: 108, goalRounds: 9 }
 

@@ -5,12 +5,10 @@ export function CounterButton({
   count,
   target,
   onClick,
-  passes = false,
 }: {
   count: number;
   target: number;
   onClick: () => void;
-  passes?: boolean;
 }) {
   const [animation, setAnimation] = useState(0);
   return (
@@ -22,13 +20,13 @@ export function CounterButton({
       }}
       aria-label="ပုတီး တစ်ကြိမ်စိပ်မည်"
     >
+      <span className="round-ring" style={{ background: `conic-gradient(#e8bd6a ${(count / target) * 100}%, #ffffff55 0)` }} />
       <span key={animation} className={animation ? "bead-ripple" : ""} />
       <span className="bead-inner">
-        <span className="bead-small">{passes ? "ယခုပတ်ရေ" : "ယခုအကြိမ်"}</span>
+        <span className="bead-small">ယခုပတ်:</span>
         <strong className="bead-count">{number(count)}</strong>
         <span className="bead-target">
           / {number(target)}
-          {passes && " ပတ်"}
         </span>
         <span className="bead-hint">နှိပ်၍ စိပ်ပါ</span>
       </span>
