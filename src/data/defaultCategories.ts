@@ -12,23 +12,23 @@ export const defaultCategories: Category[] = [
     { id: 'buddha-8', name: 'ဗုဒ္ဓေါ', description: 'သစ္စာလေးပါးကို သိတော်မူ၍ သိစေတော်မူသော' },
     { id: 'buddha-9', name: 'ဘဂဝါ', description: 'ဘုန်းဂုဏ်တော်နှင့် ပြည့်စုံတော်မူသော' },
   ] },
-  { id: 'dhamma', name: 'တရားဂုဏ်တော် ၆ ပါး', mode: 'sequence', items: [
-    { id: 'dhamma-1', name: 'သွာက္ခာတော' }, { id: 'dhamma-2', name: 'သန္ဒိဋ္ဌိကော' },
-    { id: 'dhamma-3', name: 'အကာလိကော' }, { id: 'dhamma-4', name: 'ဧဟိပဿိကော' },
-    { id: 'dhamma-5', name: 'ဩပနေယျိကော' }, { id: 'dhamma-6', name: 'ပစ္စတ္တံ ဝေဒိတဗ္ဗော ဝိညူဟီတိ' },
-  ] },
-  { id: 'sangha', name: 'သံဃာဂုဏ်တော် ၉ ပါး', mode: 'sequence', items: [
-    { id: 'sangha-1', name: 'သုပ္ပဋိပန္နော' }, { id: 'sangha-2', name: 'ဥဇုပဋိပန္နော' },
-    { id: 'sangha-3', name: 'ညာယပဋိပန္နော' }, { id: 'sangha-4', name: 'သာမီစိပဋိပန္နော' },
-    { id: 'sangha-5', name: 'အာဟုနေယျော' }, { id: 'sangha-6', name: 'ပါဟုနေယျော' },
-    { id: 'sangha-7', name: 'ဒက္ခိဏေယျော' }, { id: 'sangha-8', name: 'အဉ္ဇလိကရဏီယော' },
-    { id: 'sangha-9', name: 'အနုတ္တရံ ပုညက္ခေတ္တံ လောကဿ' },
-  ] },
-  { id: 'metta', name: 'မေတ္တာပို့ခြင်း', mode: 'sequence', items: [
-    { id: 'metta-1', name: 'ဘေးရန်ကင်းပါစေ' }, { id: 'metta-2', name: 'စိတ်ချမ်းသာပါစေ' },
-    { id: 'metta-3', name: 'ကိုယ်ကျန်းမာပါစေ' }, { id: 'metta-4', name: 'ဆင်းရဲကင်းပါစေ' },
-    { id: 'metta-5', name: 'သတ္တဝါအားလုံး ချမ်းသာကြပါစေ' },
-  ] },
+  // { id: 'dhamma', name: 'တရားဂုဏ်တော် ၆ ပါး', mode: 'sequence', items: [
+  //   { id: 'dhamma-1', name: 'သွာက္ခာတော' }, { id: 'dhamma-2', name: 'သန္ဒိဋ္ဌိကော' },
+  //   { id: 'dhamma-3', name: 'အကာလိကော' }, { id: 'dhamma-4', name: 'ဧဟိပဿိကော' },
+  //   { id: 'dhamma-5', name: 'ဩပနေယျိကော' }, { id: 'dhamma-6', name: 'ပစ္စတ္တံ ဝေဒိတဗ္ဗော ဝိညူဟီတိ' },
+  // ] },
+  // { id: 'sangha', name: 'သံဃာဂုဏ်တော် ၉ ပါး', mode: 'sequence', items: [
+  //   { id: 'sangha-1', name: 'သုပ္ပဋိပန္နော' }, { id: 'sangha-2', name: 'ဥဇုပဋိပန္နော' },
+  //   { id: 'sangha-3', name: 'ညာယပဋိပန္နော' }, { id: 'sangha-4', name: 'သာမီစိပဋိပန္နော' },
+  //   { id: 'sangha-5', name: 'အာဟုနေယျော' }, { id: 'sangha-6', name: 'ပါဟုနေယျော' },
+  //   { id: 'sangha-7', name: 'ဒက္ခိဏေယျော' }, { id: 'sangha-8', name: 'အဉ္ဇလိကရဏီယော' },
+  //   { id: 'sangha-9', name: 'အနုတ္တရံ ပုညက္ခေတ္တံ လောကဿ' },
+  // ] },
+  // { id: 'metta', name: 'မေတ္တာပို့ခြင်း', mode: 'sequence', items: [
+  //   { id: 'metta-1', name: 'ဘေးရန်ကင်းပါစေ' }, { id: 'metta-2', name: 'စိတ်ချမ်းသာပါစေ' },
+  //   { id: 'metta-3', name: 'ကိုယ်ကျန်းမာပါစေ' }, { id: 'metta-4', name: 'ဆင်းရဲကင်းပါစေ' },
+  //   { id: 'metta-5', name: 'သတ္တဝါအားလုံး ချမ်းသာကြပါစေ' },
+  // ] },
   // { id: 'custom', name: 'ကိုယ်ပိုင်', mode: 'sequence', items: [] },
   { id: 'combo', name: 'သရဏဂုံ + ဂုဏ်တော် + ၂၄ ပစ္စည်း အကျဉ်း', mode: 'sequence', items: [
     ...['ဗုဒ္ဓံ သရဏံ ဂစ္ဆာမိ', 'ဓမ္မံ သရဏံ ဂစ္ဆာမိ', 'သံဃံ သရဏံ ဂစ္ဆာမိ'].map((name, index) => ({ id: `combo-saranagon-${index + 1}`, name })),
