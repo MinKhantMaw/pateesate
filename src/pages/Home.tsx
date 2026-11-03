@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Play, Plus, Star } from "lucide-react";
+import { Plus, Star } from "lucide-react";
 import { Link } from "react-router-dom";
 import { CategoryCard } from "../components/CategoryCard";
 import { ConfirmDialog } from "../components/ConfirmDialog";
@@ -17,7 +17,6 @@ export function Home() {
     clearCounterModes,
     settings,
     setSettings,
-    combos,
   } = useApp();
   const catalog = availableCategories(categories);
   const pinned = catalog.flatMap((category) =>
@@ -25,17 +24,6 @@ export function Home() {
       .filter((item) => settings.pinnedItems.includes(item.id))
       .map((item) => ({ category, item })),
   );
-  const resumePath = settings.lastCounterPath;
-  const resumeParts = resumePath?.split("/");
-  const canResume =
-    resumeParts?.[1] === "combo"
-      ? combos.some((combo) => combo.id === resumeParts[2])
-      : resumeParts?.[1] === "category" &&
-        catalog.some(
-          (category) =>
-            category.id === resumeParts[2] &&
-            category.items.some((item) => item.id === resumeParts[4]),
-        );
   const [editing, setEditing] = useState<Category | "new" | null>(null);
   const [name, setName] = useState("");
   const [mode, setMode] = useState<CounterMode>("sequence");
